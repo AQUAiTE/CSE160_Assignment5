@@ -8,7 +8,7 @@
     },
     "scripts": {
       "predeploy": "npx vite build",
-      "deploy": "gh-pages -d dist"
+      "deploy": "gh-pages -d src/dist"
     }
   }
   

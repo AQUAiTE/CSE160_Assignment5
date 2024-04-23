@@ -1,5 +1,5 @@
 // vite.config.js
 export default {
     root: "src",
-    base: "/CSE160_Assignment5/"
+    base: "/CSE160_Assignment5/",
 };
