@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
+import {MTLLoader} from 'three/addons/loaders/MTLLoader.js';
 
 function main() {
 
@@ -8,7 +10,7 @@ function main() {
     renderer.setSize(window.innerWidth * 0.9, window.innerHeight * 0.9);
 
     // Camera Setup
-    const fov = 90;
+    const fov = 95;
     const aspect = canvas.clientWidth / canvas.clientHeight;
     const near = 0.1;
     const far = 5;
@@ -43,11 +45,11 @@ function main() {
     const cubes = [];
 
     const dodes = [
-        makeInstance(dode, 0x00FFFF, -2)
+        makeInstance(dode, 0x00FFFF, -2, 0.8)
     ];
 
     const cylinders = [
-        makeInstance(cylinder, 0x44aa88, 0)
+        makeInstance(cylinder, 0x44aa88, 0, -1)
     ];
 
     // Adding Texture to cube
@@ -65,8 +67,23 @@ function main() {
 
 	const cube = new THREE.Mesh(box, materials);
     cube.position.x = 2;
+    cube.position.y = 0.8
 	scene.add(cube);
 	cubes.push(cube); // add to our list of cubes to rotate
+
+    // Adding Custom 3D Object
+    let root;
+    const mtlLoader = new MTLLoader();
+    mtlLoader.load('Ludicolo_Model/M/Ludicolo_M.mtl', (mtl) => {
+        mtl.preload();
+        const objLoader = new OBJLoader();
+        objLoader.setMaterials(mtl);
+        objLoader.load('Ludicolo_Model/M/Ludicolo_M.obj', (loadedRoot) => {
+            root = loadedRoot;
+            root.position.y = 0.5
+            scene.add(root);
+        });
+    } );
 
     // Function to help with loading different textures per cube side
     function loadTexture(path) {
@@ -76,7 +93,7 @@ function main() {
     }
 
     // Function to generate shapes with a given geometry, color, and x position 
-    function makeInstance(geometry, color, x) {
+    function makeInstance(geometry, color, x, y) {
 
         const material = new THREE.MeshPhongMaterial({ color });
 
@@ -85,6 +102,8 @@ function main() {
         scene.add(shape);
 
         shape.position.x = x;
+
+        shape.position.y = shape.position.y + y;
 
         return shape;
 
@@ -116,17 +135,23 @@ function main() {
         cylinders.forEach((shape, ndx) => {
             const speed = 0.2 + ndx * .05;
             const rot = time * speed + 5;
-            shape.rotation.x = rot * 2;
             shape.rotation.y = rot * 10;
 
         });
+
+        if (root) {
+            const speed = 1.5; // Adjust the speed of rotation as needed
+            const rot = time * speed;
+            root.rotation.x = rot;
+            root.rotation.y = rot;
+        }
 
         renderer.render(scene, camera);
 
         requestAnimationFrame(render);
 
     }
-
+    
     requestAnimationFrame(render);
 
 }
