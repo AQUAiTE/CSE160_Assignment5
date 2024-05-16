@@ -1,6 +1,21 @@
 import * as THREE from 'three';
 import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
 import {MTLLoader} from 'three/addons/loaders/MTLLoader.js';
+import { OrbitControls} from 'three/examples/jsm/Addons.js';
+import {GUI} from 'three/addons/libs/lil-gui.module.min.js';
+import {cameraGUI} from './cameraGUI.js';
+
+function updateCamera(c) {
+    c.updateProjectionMatrix();
+}
+
+function useGUI(c) {
+    const gui = new GUI();
+    gui.add(c, 'fov', 45, 180).onChange(updateCamera.bind(null, c));
+    const guiControl = new cameraGUI(c, 'near', 'far', 0.1);
+    gui.add(guiControl, 'min', 0.1, 50, 0.1 ).name( 'near' ).onChange(updateCamera.bind(null, c));
+	gui.add(guiControl, 'max', 0.1, 50, 0.1 ).name( 'far' ).onChange(updateCamera.bind(null, c));
+}
 
 function main() {
 
@@ -12,10 +27,15 @@ function main() {
     // Camera Setup
     const fov = 95;
     const aspect = canvas.clientWidth / canvas.clientHeight;
-    const near = 0.1;
-    const far = 5;
+    const near = 0.7;
+    const far = 50;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     camera.position.z = 2;
+
+    useGUI(camera);
+    const controls = new OrbitControls(camera, canvas);
+    controls.target.set(0, 0, 0);
+    controls.update();
 
     const scene = new THREE.Scene();
 
@@ -23,10 +43,12 @@ function main() {
     {
 
         const color = 0xFFFFFF;
-        const intensity = 3;
-        const light = new THREE.DirectionalLight(color, intensity);
-        light.position.set(-2, 1, 3);
-        scene.add(light);
+		const intensity = 3;
+		const light = new THREE.DirectionalLight( color, intensity );
+		light.position.set( 0, 10, 0 );
+		light.target.position.set( - 5, 0, 0 );
+		scene.add( light );
+		scene.add( light.target );
 
     }
 
