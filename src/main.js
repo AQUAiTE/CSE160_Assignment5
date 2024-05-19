@@ -52,8 +52,8 @@ function makeXYZGUI(gui, vector3, name, onChangeFn) {
   }
 
 function buildGround(loader) {
-    const planeSize = 40;
-    const groundTexture = loader.load('https://threejs.org/manual/examples/resources/images/checker.png');
+    const planeSize = 20;
+    const groundTexture = loader.load('checker.png');
     groundTexture.wrapS = THREE.RepeatWrapping;
     groundTexture.wrapT = THREE.RepeatWrapping;
     groundTexture.magFilter = THREE.NearestFilter;
@@ -118,7 +118,11 @@ function main() {
 
     // Canvas and Renderer
     const canvas = document.querySelector('#canvas');
-    const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
+    const renderer = new THREE.WebGLRenderer( {
+		canvas,
+		alpha: true,
+		antialias: true
+	} );
     renderer.setSize(window.innerWidth * 0.9, window.innerHeight * 0.9);
 
     // Camera Setup
@@ -136,7 +140,6 @@ function main() {
 
     // Scene and Lighting
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color( 'black' );
     handleLighting(scene);
 
     // Build Box
@@ -161,13 +164,14 @@ function main() {
         makeInstance(cylinder, 0x44aa88, 0, 0.55)
     ];
 
-    // Adding Texture to cube
+    // Loader for any textures
     const loader = new THREE.TextureLoader;
 
+    // Build Ground Plane
     let mesh = buildGround(loader);
     scene.add(mesh);
 
-    // Load each side's texture
+    // Build PokeCube
     const materials = [
         new THREE.MeshPhongMaterial( {map: loadTexture('bulbasaur.jpg')} ),
         new THREE.MeshPhongMaterial( {map: loadTexture('totodile.jpg')} ),
@@ -196,6 +200,17 @@ function main() {
             scene.add(root);
         });
     } );
+
+    // Background Cubemap
+    {
+        const backgroundTexture = loader.load(
+            'PokeCenter.png',
+            () => {
+                backgroundTexture.mapping = THREE.EquirectangularReflectionMapping;
+                backgroundTexture.magFilter = THREE.SRGBColorSpace;
+                scene.background = backgroundTexture;
+            });
+    }
 
     // Function to help with loading different textures per cube side
     function loadTexture(path) {
