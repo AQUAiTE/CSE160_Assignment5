@@ -54,7 +54,7 @@ function makeXYZGUI(gui, vector3, name, onChangeFn) {
 
 function buildGround(loader) {
     const planeSize = 20;
-    const groundTexture = loader.load('PokeFloor.png');
+    const groundTexture = loader.load('images/PokeFloor.png');
     groundTexture.wrapS = THREE.RepeatWrapping;
     groundTexture.wrapT = THREE.RepeatWrapping;
     groundTexture.magFilter = THREE.NearestFilter;
@@ -148,6 +148,17 @@ function loadGLTFObj(scene, gltfURL, scale, x, z, rotate) {
     });
 }
 
+function buildPokeball(scene, pokeballs, pokeballTexture, x, y, z) {
+    const sphere = new THREE.SphereGeometry(0.5, 32, 16);
+    const pokeball = new THREE.Mesh(sphere, pokeballTexture);
+    pokeball.position.x = x;
+    pokeball.position.y = y;
+    pokeball.position.z = z;
+    pokeball.rotation.y = 3 * Math.PI / 2;
+    pokeballs.push(pokeball);
+    scene.add(pokeball);
+}
+
 function main() {
 
     // Canvas and Renderer
@@ -179,22 +190,20 @@ function main() {
     // Loader for any textures
     const loader = new THREE.TextureLoader;
 
-    // Build Box
+    // Initialize default shapes
     const boxWidth = 1;
     const boxHeight = 1;
     const boxDepth = 1;
     const box = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
-
-    // Dodecahedron
-    const dode = new THREE.DodecahedronGeometry(0.75);
-    
-    // Cylinder
+    //const dode = new THREE.DodecahedronGeometry(0.75);
     const cylinder = new THREE.CylinderGeometry(0.5, 0.5, 1, 15);
 
-    const cubes = [
+    const cylinders = [];
+    const cubes = [];
+    const pokeballs = [];
 
-    ];
-    const scoreboardTexture = loadTexture('scoreboard.png');
+    // Build Ground, Skybox, Scoreboard
+    const scoreboardTexture = loadTexture('images/pokeScoreboard.jpg');
     const scoreboard = new THREE.Mesh(
         new THREE.BoxGeometry(20, 8, 2),
         [
@@ -202,7 +211,7 @@ function main() {
             new THREE.MeshPhongMaterial({color: 0x0000FF}),
             new THREE.MeshPhongMaterial({color: 0x0000FF}),
             new THREE.MeshPhongMaterial({color: 0x0000FF}),
-            new THREE.MeshPhongMaterial({color: scoreboardTexture}),
+            new THREE.MeshPhongMaterial({map: scoreboardTexture}),
             new THREE.MeshPhongMaterial({color: 0x0000FF}),
         ]
     );
@@ -210,57 +219,81 @@ function main() {
     scoreboard.position.z = -9.5;
     scene.add(scoreboard);
 
-
-    const dodes = [
-        makeInstance(dode, 0x00FFFF, -2, 2.5, 0)
-    ];
-    scene.add(dodes[0]);
-
-    const cylinders = [
-        makeInstance(cylinder, 0x44aa88, 9.5, 2.525, -9.5),
-        makeInstance(cylinder, 0x44aa88, -9.5, 2.525, -9.5)
-    ];
-    cylinders[0].scale.set(2, 5, 2);
-    cylinders[1].scale.set(2, 5, 2);
-    scene.add(cylinders[0]);
-    scene.add(cylinders[1]);
-
-    // Build Ground Plane
-    let mesh = buildGround(loader);
-    scene.add(mesh);
-
-    // Build PokeCube
-    const materials = [
-        new THREE.MeshPhongMaterial( {map: loadTexture('bulbasaur.jpg')} ),
-        new THREE.MeshPhongMaterial( {map: loadTexture('totodile.jpg')} ),
-        new THREE.MeshPhongMaterial( {map: loadTexture('torchic.jpg')} ),
-        new THREE.MeshPhongMaterial( {map: loadTexture('turtwig.jpg')} ),
-        new THREE.MeshPhongMaterial( {map: loadTexture('oshawott.jpg')} ),
-        new THREE.MeshPhongMaterial( {map: loadTexture('chespin.jpg')} ),
-    ];
-
-	const cube = new THREE.Mesh(box, materials);
-    cube.position.x = 2;
-    cube.position.y = 2.5;
-	scene.add(cube);
-	cubes.push(cube); // add to our list of cubes to rotate
-
-    // Adding Custom 3D Object
-    loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -1.5, 1.5, Math.PI / 2);
-    loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, 1.5, 1.5, 3 * Math.PI / 2);
-    loadCustomObjs(scene, 'MirorB_Model/model.mtl', 'MirorB_Model/model.obj', 0.13, -7.5, -2.0, Math.PI / 2.5);
-    loadGLTFObj(scene, 'Serena_Model/Pokemon XY/Serena/Serena.glb', 0.025, 7.5, 4.0, 3 * Math.PI / 4);
-
-    // Background Cubemap
     {
         const backgroundTexture = loader.load(
-            'PokeCenter.png',
+            'images/PokeCenter.png',
             () => {
                 backgroundTexture.mapping = THREE.EquirectangularReflectionMapping;
                 backgroundTexture.magFilter = THREE.SRGBColorSpace;
                 scene.background = backgroundTexture;
             });
     }
+
+    let mesh = buildGround(loader);
+    scene.add(mesh);
+
+    // Pillars for Scoreboard
+    cylinders.push(makeInstance(cylinder, 0x44aa88, 9.5, 2.525, -9.5));
+    cylinders.push(makeInstance(cylinder, 0x44aa88, -9.5, 2.525, -9.5));
+    cylinders[0].scale.set(2, 5, 2);
+    cylinders[1].scale.set(2, 5, 2);
+    scene.add(cylinders[0]);
+    scene.add(cylinders[1]);
+
+    // Pokeballs on Scoreboard
+    const pokeballTexture = new THREE.MeshPhongMaterial( {map: loadTexture('images/pokeball.png')} );
+    buildPokeball(scene, pokeballs, pokeballTexture, -8.65, 12.3, -8.2);
+    buildPokeball(scene, pokeballs, pokeballTexture, -8.65, 11.0, -8.2);
+    buildPokeball(scene, pokeballs, pokeballTexture, -8.65, 9.7, -8.2);
+    buildPokeball(scene, pokeballs, pokeballTexture, -8.65, 8.4, -8.2);
+    buildPokeball(scene, pokeballs, pokeballTexture, -8.65, 7.1, -8.2);
+    buildPokeball(scene, pokeballs, pokeballTexture, -8.65, 5.85, -8.2);
+    // Right Side
+    buildPokeball(scene, pokeballs, pokeballTexture, 8.65, 12.3, -8.2);
+    buildPokeball(scene, pokeballs, pokeballTexture, 8.65, 11.0, -8.2);
+    buildPokeball(scene, pokeballs, pokeballTexture, 8.65, 9.7, -8.2);
+    buildPokeball(scene, pokeballs, pokeballTexture, 8.65, 8.4, -8.2);
+    buildPokeball(scene, pokeballs, pokeballTexture, 8.65, 7.1, -8.2);
+    buildPokeball(scene, pokeballs, pokeballTexture, 8.65, 5.85, -8.2);
+
+    // Build PokeCube
+    const materials = [
+        new THREE.MeshPhongMaterial( {map: loadTexture('images/bulbasaur.jpg')} ),
+        new THREE.MeshPhongMaterial( {map: loadTexture('images/totodile.jpg')} ),
+        new THREE.MeshPhongMaterial( {map: loadTexture('images/torchic.jpg')} ),
+        new THREE.MeshPhongMaterial( {map: loadTexture('images/turtwig.jpg')} ),
+        new THREE.MeshPhongMaterial( {map: loadTexture('images/oshawott.jpg')} ),
+        new THREE.MeshPhongMaterial( {map: loadTexture('images/chespin.jpg')} ),
+    ];
+
+    // Create PokeCube
+	const cube = new THREE.Mesh(box, materials);
+    cube.position.x = -9.5;
+    cube.position.y = 0.55;
+    cube.position.z = 9.5;
+	scene.add(cube);
+	cubes.push(cube);
+
+    // Adding 3D Pokemon Models
+    // Serena's Team
+    loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, 1.5, 1.5, 3 * Math.PI / 2);
+    loadCustomObjs(scene, 'Absol/Normal/Absol_Normal.mtl', 'Absol/Normal/Absol_Normal.obj', 3.0, 5.5, -3.5, 7 * Math.PI / 4);
+    loadCustomObjs(scene, 'Altaria/Normal/Altaria_Normal.mtl', 'Altaria/Normal/Altaria_Normal.obj', 2.5, 5.5, -0.5, 11 * Math.PI / 7);
+    loadCustomObjs(scene, 'Blaziken/Mega/Blaziken_Mega.mtl', 'Blaziken/Mega/Blaziken_Mega.obj', 2.5, 5.5, 2.0, 3 * Math.PI / 2);
+    loadCustomObjs(scene, 'Slaking/Slaking.mtl', 'Slaking/Slaking.obj', 2.5, 5.5, 4.75, 4 * Math.PI / 3);
+    loadCustomObjs(scene, 'Aggron/Normal/Aggron_Normal.mtl', 'Aggron/Normal/Aggron_Normal.obj', 2.5, 5.5, 7.5, 5 * Math.PI / 4);
+
+    // Miror B's Team
+    loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -1.5, 1.5, Math.PI / 2);
+    loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -4.5, -3.5, Math.PI / 4);
+    loadCustomObjs(scene, 'Armaldo/Armaldo.mtl', 'Armaldo/Armaldo.obj', 2.5, -4.5, -0.5, Math.PI / 3);
+    loadCustomObjs(scene, 'Dragonite/Dragonite.mtl', 'Dragonite/Dragonite.obj', 2.5, -4.5, 2.0, Math.PI / 2);
+    loadCustomObjs(scene, 'Exploud/Exploud.mtl', 'Exploud/Exploud.obj', 2.5, -4.5, 4.75, 11 * Math.PI / 18);
+    loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -4.5, 7.5, 3 * Math.PI / 4);
+
+    // Trainer Models
+    loadCustomObjs(scene, 'MirorB_Model/model.mtl', 'MirorB_Model/model.obj', 0.13, -7.5, -2.0, Math.PI / 2.5);
+    loadGLTFObj(scene, 'Serena_Model/Pokemon XY/Serena/Serena.glb', 0.025, 7.5, 4.0, 3 * Math.PI / 4);
 
 
 
@@ -294,37 +327,22 @@ function main() {
 
         time *= 0.001; // convert time to seconds
 
-        /*cubes.forEach((shape, ndx) => {
-
-            const speed = 1 + ndx * .1;
+        pokeballs.forEach((shape, ndx) => {
+            let speed;
+            if (ndx < 6) {
+                speed = 1.8;
+            } else {
+                speed = 1.0;
+            }
             const rot = time * speed;
-            shape.rotation.x = rot;
             shape.rotation.y = rot;
-
-        });*/
-
-        /*dodes.forEach((shape, ndx) => {
-
-            const speed = 10 + ndx * .1;
-            const rot = time * speed;
-            shape.rotation.x = rot;
-            shape.rotation.y = rot;
-
-        });*/
+        });
         
         cylinders.forEach((shape, ndx) => {
             const speed = 0.2 + ndx * .05;
             const rot = time * speed + 5;
             shape.rotation.y = rot * 10;
-
         });
-
-        /*if (root) {
-            const speed = 1.5; // Adjust the speed of rotation as needed
-            const rot = time * speed;
-            root.rotation.x = rot;
-            root.rotation.y = rot;
-        }*/
 
         renderer.render(scene, camera);
 
