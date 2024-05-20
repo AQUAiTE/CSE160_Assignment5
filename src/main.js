@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import {OBJLoader} from 'three/examples/jsm/loaders/OBJLoader.js';
 import {MTLLoader} from 'three/examples/jsm/loaders/MTLLoader.js';
-import { OrbitControls} from 'three/examples/jsm/Addons.js';
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {OrbitControls} from 'three/examples/jsm/Addons.js';
 import {GUI} from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import {cameraGUI} from './cameraGUI.js';
 
@@ -53,13 +54,11 @@ function makeXYZGUI(gui, vector3, name, onChangeFn) {
 
 function buildGround(loader) {
     const planeSize = 20;
-    const groundTexture = loader.load('checker.png');
+    const groundTexture = loader.load('PokeFloor.png');
     groundTexture.wrapS = THREE.RepeatWrapping;
     groundTexture.wrapT = THREE.RepeatWrapping;
     groundTexture.magFilter = THREE.NearestFilter;
     groundTexture.colorSpace = THREE.SRGBColorSpace;
-    const repeats = planeSize / 2;
-    groundTexture.repeat.set(repeats, repeats);
     const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
     const planeMat = new THREE.MeshPhongMaterial({
         map: groundTexture,
@@ -88,7 +87,7 @@ function handleLighting(scene) {
     scene.add(hemiLight);
 
     // Spotlight Light
-    let spotColor = 0xFFFFFF; // Yelow
+    let spotColor = 0x5EA8BA; // Bluish Gray
     intensity = 100;
     const spotLight = new THREE.SpotLight(spotColor, intensity);
     spotLight.position.set(0, 5, 1.14);
@@ -107,11 +106,46 @@ function handleLighting(scene) {
 
     const gui = new GUI();
     gui.addColor(new ColorGUIHelper(spotLight, 'color'), 'value').name('color');
-    gui.add(spotLight, 'intensity', 0, 2, 0.01);
+    gui.add(spotLight, 'intensity', 0, 200, 1);
     gui.add(new DegRadHelper(spotLight, 'angle'), 'value', 0, 90).name('angle').onChange(updateLight);
     gui.add(spotLight, 'penumbra', 0, 1, 0.01);
     makeXYZGUI(gui, spotLight.position, 'position', updateLight);
     makeXYZGUI(gui, spotLight.target.position, 'target', updateLight);
+}
+
+function loadCustomObjs(scene, mtlURL, objURL, scale, x, z, rotate) {
+    let root;
+    const mtlLoader = new MTLLoader();
+
+    mtlLoader.load(mtlURL, (mtl) => {
+        mtl.preload();
+        const objLoader = new OBJLoader();
+        objLoader.setMaterials(mtl);
+        objLoader.load(objURL, (loadedRoot) => {
+            root = loadedRoot;
+            root.position.x += x;
+            root.position.y += 0.01;
+            root.position.z += z;
+            root.scale.set(scale, scale, scale);
+            root.rotation.set(0.0, rotate, 0.0);
+            scene.add(root);
+        });
+    } );
+
+}
+
+function loadGLTFObj(scene, gltfURL, scale, x, z, rotate) {
+    const loader = new GLTFLoader();
+    loader.load(gltfURL, (gltf) => {
+        const root = gltf.scene;
+        root.position.x += x;
+        root.position.z += z;
+        root.scale.set(scale, scale, scale);
+        root.rotation.set(Math.PI / 2, 0.0, rotate);
+        scene.add(root);
+    }, undefined, (error) => {
+        console.error('An error happened while loading the GLTF model', error);
+    });
 }
 
 function main() {
@@ -131,7 +165,7 @@ function main() {
     const near = 0.1;
     const far = 100;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.set(0, 5, 2);
+    camera.position.set(0, 5, 13);
 
     useGUI(camera);
     const controls = new OrbitControls(camera, canvas);
@@ -141,6 +175,9 @@ function main() {
     // Scene and Lighting
     const scene = new THREE.Scene();
     handleLighting(scene);
+
+    // Loader for any textures
+    const loader = new THREE.TextureLoader;
 
     // Build Box
     const boxWidth = 1;
@@ -154,18 +191,39 @@ function main() {
     // Cylinder
     const cylinder = new THREE.CylinderGeometry(0.5, 0.5, 1, 15);
 
-    const cubes = [];
+    const cubes = [
+
+    ];
+    const scoreboardTexture = loadTexture('scoreboard.png');
+    const scoreboard = new THREE.Mesh(
+        new THREE.BoxGeometry(20, 8, 2),
+        [
+            new THREE.MeshPhongMaterial({color: 0x0000FF}),
+            new THREE.MeshPhongMaterial({color: 0x0000FF}),
+            new THREE.MeshPhongMaterial({color: 0x0000FF}),
+            new THREE.MeshPhongMaterial({color: 0x0000FF}),
+            new THREE.MeshPhongMaterial({color: scoreboardTexture}),
+            new THREE.MeshPhongMaterial({color: 0x0000FF}),
+        ]
+    );
+    scoreboard.position.y = 9.05;
+    scoreboard.position.z = -9.5;
+    scene.add(scoreboard);
+
 
     const dodes = [
-        makeInstance(dode, 0x00FFFF, -2, 2.5)
+        makeInstance(dode, 0x00FFFF, -2, 2.5, 0)
     ];
+    scene.add(dodes[0]);
 
     const cylinders = [
-        makeInstance(cylinder, 0x44aa88, 0, 0.55)
+        makeInstance(cylinder, 0x44aa88, 9.5, 2.525, -9.5),
+        makeInstance(cylinder, 0x44aa88, -9.5, 2.525, -9.5)
     ];
-
-    // Loader for any textures
-    const loader = new THREE.TextureLoader;
+    cylinders[0].scale.set(2, 5, 2);
+    cylinders[1].scale.set(2, 5, 2);
+    scene.add(cylinders[0]);
+    scene.add(cylinders[1]);
 
     // Build Ground Plane
     let mesh = buildGround(loader);
@@ -188,18 +246,10 @@ function main() {
 	cubes.push(cube); // add to our list of cubes to rotate
 
     // Adding Custom 3D Object
-    let root;
-    const mtlLoader = new MTLLoader();
-    mtlLoader.load('Ludicolo_Model/M/Ludicolo_M.mtl', (mtl) => {
-        mtl.preload();
-        const objLoader = new OBJLoader();
-        objLoader.setMaterials(mtl);
-        objLoader.load('Ludicolo_Model/M/Ludicolo_M.obj', (loadedRoot) => {
-            root = loadedRoot;
-            root.position.y = 2.0;
-            scene.add(root);
-        });
-    } );
+    loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -1.5, 1.5, Math.PI / 2);
+    loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, 1.5, 1.5, 3 * Math.PI / 2);
+    loadCustomObjs(scene, 'MirorB_Model/model.mtl', 'MirorB_Model/model.obj', 0.13, -7.5, -2.0, Math.PI / 2.5);
+    loadGLTFObj(scene, 'Serena_Model/Pokemon XY/Serena/Serena.glb', 0.025, 7.5, 4.0, 3 * Math.PI / 4);
 
     // Background Cubemap
     {
@@ -212,6 +262,9 @@ function main() {
             });
     }
 
+
+
+    // In Main Functions ===================================================================================================================
     // Function to help with loading different textures per cube side
     function loadTexture(path) {
         const texture = loader.load(path);
@@ -220,17 +273,17 @@ function main() {
     }
 
     // Function to generate shapes with a given geometry, color, and x position 
-    function makeInstance(geometry, color, x, y) {
+    function makeInstance(geometry, color, x, y, z) {
 
         const material = new THREE.MeshPhongMaterial({ color });
 
         const shape = new THREE.Mesh(geometry, material);
 
-        scene.add(shape);
+        shape.position.x += x;
 
-        shape.position.x = x;
+        shape.position.y += y;
 
-        shape.position.y = shape.position.y + y;
+        shape.position.z += z;
 
         return shape;
 
@@ -241,23 +294,23 @@ function main() {
 
         time *= 0.001; // convert time to seconds
 
-        cubes.forEach((shape, ndx) => {
+        /*cubes.forEach((shape, ndx) => {
 
             const speed = 1 + ndx * .1;
             const rot = time * speed;
             shape.rotation.x = rot;
             shape.rotation.y = rot;
 
-        });
+        });*/
 
-        dodes.forEach((shape, ndx) => {
+        /*dodes.forEach((shape, ndx) => {
 
             const speed = 10 + ndx * .1;
             const rot = time * speed;
             shape.rotation.x = rot;
             shape.rotation.y = rot;
 
-        });
+        });*/
         
         cylinders.forEach((shape, ndx) => {
             const speed = 0.2 + ndx * .05;
@@ -266,12 +319,12 @@ function main() {
 
         });
 
-        if (root) {
+        /*if (root) {
             const speed = 1.5; // Adjust the speed of rotation as needed
             const rot = time * speed;
             root.rotation.x = rot;
             root.rotation.y = rot;
-        }
+        }*/
 
         renderer.render(scene, camera);
 
