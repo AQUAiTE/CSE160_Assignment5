@@ -4,10 +4,19 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>ThreeJS with Vite</title>
-      <script type="module" crossorigin src="/CSE160_Assignment5/assets/index-Tj6itgid.js"></script>
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.min.js",
+                    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+                }
+            }            
+        </script>
+      <script type="module" crossorigin src="/CSE160_Assignment5/assets/index-DJsP-lkM.js"></script>
       <link rel="stylesheet" crossorigin href="/CSE160_Assignment5/assets/index-CTcciXS8.css">
     </head>
     <body>
         <canvas id="canvas"></canvas>
+
     </body>
 </html>
