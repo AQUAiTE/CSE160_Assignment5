@@ -1,10 +1,11 @@
 import * as THREE from 'three';
-import {OBJLoader} from 'three/examples/jsm/loaders/OBJLoader.js';
-import {MTLLoader} from 'three/examples/jsm/loaders/MTLLoader.js';
-import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
-import {OrbitControls} from 'three/examples/jsm/Addons.js';
-import {GUI} from 'three/examples/jsm/libs/lil-gui.module.min.js';
-import {cameraGUI} from './cameraGUI.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { cameraGUI } from './cameraGUI.js';
+import { createHPBar, updateHPBar } from './battleManager.js';
 
 function updateCamera(c) {
     c.updateProjectionMatrix();
@@ -63,24 +64,21 @@ function handleLighting(scene) {
 }
 
 function loadCustomObjs(scene, mtlURL, objURL, scale, x, z, rotate) {
-    let root;
-    const mtlLoader = new MTLLoader();
-
-    mtlLoader.load(mtlURL, (mtl) => {
-        mtl.preload();
-        const objLoader = new OBJLoader();
-        objLoader.setMaterials(mtl);
-        objLoader.load(objURL, (loadedRoot) => {
-            root = loadedRoot;
-            root.position.x += x;
-            root.position.y += 0.01;
-            root.position.z += z;
-            root.scale.set(scale, scale, scale);
-            root.rotation.set(0.0, rotate, 0.0);
-            scene.add(root);
-        });
-    } );
-
+    return new Promise((resolve, reject) => {
+        const mtlLoader = new MTLLoader();
+        mtlLoader.load(mtlURL, (mtl) => {
+            mtl.preload();
+            const objLoader = new OBJLoader();
+            objLoader.setMaterials(mtl);
+            objLoader.load(objURL, (loadedRoot) => {
+                loadedRoot.position.set(x, 0.01, z);
+                loadedRoot.scale.set(scale, scale, scale);
+                loadedRoot.rotation.set(0.0, rotate, 0.0);
+                scene.add(loadedRoot);
+                resolve(loadedRoot); // Resolve the promise with the loaded object
+            });
+        }, undefined, reject); // Reject the promise if there's an error
+    });
 }
 
 function loadGLTFObj(scene, gltfURL, scale, x, z, rotate) {
@@ -108,7 +106,11 @@ function buildPokeball(scene, pokeballs, pokeballTexture, x, y, z) {
     scene.add(pokeball);
 }
 
-function main() {
+async function main() {
+    const teamMirorB = [];
+    const teamSerena = [];
+    const pokePositions = [];
+    const pokeNames = ['Ludicolo', 'Absol', 'Altaria', 'Blaziken', 'Slaking', 'Aggron', 'Ludicolo1', 'Ludicolo2', 'Armaldo', 'Dragonite', 'Exploud', 'Ludicolo3'];
 
     // Canvas and Renderer
     const canvas = document.querySelector('#canvas');
@@ -136,7 +138,6 @@ function main() {
     const scene = new THREE.Scene();
     handleLighting(scene);
 
-    // Loader for any textures
     const loader = new THREE.TextureLoader;
 
     // Initialize default shapes
@@ -223,28 +224,61 @@ function main() {
 	scene.add(cube);
 	cubes.push(cube);
 
-    // Adding 3D Pokemon Models
-    // Serena's Team
-    loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, 1.5, 1.5, 3 * Math.PI / 2);
-    loadCustomObjs(scene, 'Absol/Normal/Absol_Normal.mtl', 'Absol/Normal/Absol_Normal.obj', 3.0, 5.5, -3.5, 7 * Math.PI / 4);
-    loadCustomObjs(scene, 'Altaria/Normal/Altaria_Normal.mtl', 'Altaria/Normal/Altaria_Normal.obj', 2.5, 5.5, -0.5, 11 * Math.PI / 7);
-    loadCustomObjs(scene, 'Blaziken/Mega/Blaziken_Mega.mtl', 'Blaziken/Mega/Blaziken_Mega.obj', 2.5, 5.5, 2.0, 3 * Math.PI / 2);
-    loadCustomObjs(scene, 'Slaking/Slaking.mtl', 'Slaking/Slaking.obj', 2.5, 5.5, 4.75, 4 * Math.PI / 3);
-    loadCustomObjs(scene, 'Aggron/Normal/Aggron_Normal.mtl', 'Aggron/Normal/Aggron_Normal.obj', 2.5, 5.5, 7.5, 5 * Math.PI / 4);
+    // Loading Pokemon Models Async
+    // Reason: I want to be able to tie other elements to their models later
+    const promisedPokes = [
+        // Adding 3D Pokemon Models
+        // Serena's Team
+        loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, 1.5, 1.5, 3 * Math.PI / 2),
+        loadCustomObjs(scene, 'Absol/Normal/Absol_Normal.mtl', 'Absol/Normal/Absol_Normal.obj', 3.0, 5.5, -3.5, 7 * Math.PI / 4),
+        loadCustomObjs(scene, 'Altaria/Normal/Altaria_Normal.mtl', 'Altaria/Normal/Altaria_Normal.obj', 2.5, 5.5, -0.5, 11 * Math.PI / 7),
+        loadCustomObjs(scene, 'Blaziken/Mega/Blaziken_Mega.mtl', 'Blaziken/Mega/Blaziken_Mega.obj', 2.5, 5.5, 2.0, 3 * Math.PI / 2),
+        loadCustomObjs(scene, 'Slaking/Slaking.mtl', 'Slaking/Slaking.obj', 2.5, 5.5, 4.75, 4 * Math.PI / 3),
+        loadCustomObjs(scene, 'Aggron/Normal/Aggron_Normal.mtl', 'Aggron/Normal/Aggron_Normal.obj', 2.5, 5.5, 7.5, 5 * Math.PI / 4),
 
-    // Miror B's Team
-    loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -1.5, 1.5, Math.PI / 2);
-    loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -4.5, -3.5, Math.PI / 4);
-    loadCustomObjs(scene, 'Armaldo/Armaldo.mtl', 'Armaldo/Armaldo.obj', 2.5, -4.5, -0.5, Math.PI / 3);
-    loadCustomObjs(scene, 'Dragonite/Dragonite.mtl', 'Dragonite/Dragonite.obj', 2.5, -4.5, 2.0, Math.PI / 2);
-    loadCustomObjs(scene, 'Exploud/Exploud.mtl', 'Exploud/Exploud.obj', 2.5, -4.5, 4.75, 11 * Math.PI / 18);
-    loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -4.5, 7.5, 3 * Math.PI / 4);
+        // Miror B's Team
+        loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -1.5, 1.5, Math.PI / 2),
+        loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -4.5, -3.5, Math.PI / 4),
+        loadCustomObjs(scene, 'Armaldo/Armaldo.mtl', 'Armaldo/Armaldo.obj', 2.5, -4.5, -0.5, Math.PI / 3),
+        loadCustomObjs(scene, 'Dragonite/Dragonite.mtl', 'Dragonite/Dragonite.obj', 2.5, -4.5, 2.0, Math.PI / 2),
+        loadCustomObjs(scene, 'Exploud/Exploud.mtl', 'Exploud/Exploud.obj', 2.5, -4.5, 4.75, 11 * Math.PI / 18),
+        loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -4.5, 7.5, 3 * Math.PI / 4)
+    ];
+
+    const loadedPokes = await Promise.all(promisedPokes);
+    loadedPokes.forEach((poke, index) => {
+        const pos = new THREE.Vector3();
+        poke.name = pokeNames[index];
+        if (index < 6) {
+            teamSerena.push(poke);
+        } else {
+            teamMirorB.push(poke);
+        }
+        pokePositions.push(poke.getWorldPosition(pos));
+    });
 
     // Trainer Models
     loadCustomObjs(scene, 'MirorB_Model/model.mtl', 'MirorB_Model/model.obj', 0.13, -7.5, 4.5, 11 * Math.PI / 17);
     loadGLTFObj(scene, 'Serena_Model/Pokemon XY/Serena/Serena.glb', 0.025, 7.5, -2.0, Math.PI / 4);
 
+    // Battle Sequence ===================================================================================================================
 
+    // Initialize Current Pokemon Battling
+    let currentPokeSerena = 0;
+    let currentPokeMirorB = 0;
+
+    const serenaHP = createHPBar(300);
+    const mirorBHP = createHPBar(200);
+    
+
+    teamSerena[currentPokeSerena].add(serenaHP);
+    teamMirorB[currentPokeMirorB].add(mirorBHP);
+
+    serenaHP.position.set(0, 1.5, 0);
+    mirorBHP.position.set(0, 1.5, 0);
+
+    updateHPBar(serenaHP, 150);
+    updateHPBar(mirorBHP, 165);
 
     // In Main Functions ===================================================================================================================
     // Function to help with loading different textures per cube side
@@ -293,6 +327,9 @@ function main() {
             shape.rotation.y = rot * 10;
         });
 
+        updateHPBarFacingCamera(serenaHP, camera);
+        updateHPBarFacingCamera(mirorBHP, camera);
+
         renderer.render(scene, camera);
 
         requestAnimationFrame(render);
@@ -301,6 +338,15 @@ function main() {
     
     requestAnimationFrame(render);
 
+}
+
+function updateHPBarFacingCamera(hpBar, camera) {
+    // Get the direction from the HP bar to the camera
+    const direction = new THREE.Vector3();
+    camera.getWorldPosition(direction);
+
+    // Apply rotation to face the camera
+    hpBar.lookAt(direction);
 }
 
 main();
