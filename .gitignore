@@ -1,3 +1,9 @@
 /node_modules
 /package-lock.json
 /src/dist
+src/public/Absol.zip
+src/public/Aggron.zip
+src/public/Altaria.zip
+src/public/Armaldo.zip
+src/public/Dragonite.zip
+src/public/Exploud.zip

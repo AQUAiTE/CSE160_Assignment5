@@ -5,7 +5,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { cameraGUI } from './cameraGUI.js';
-import { createHPBar, updateHPBar } from './battleManager.js';
+import { createHPBar, updateHPBar, handleTurn, openMenu, closeMenu, showAttackOrStats, handleAttack } from './battleManager.js';
 
 function updateCamera(c) {
     c.updateProjectionMatrix();
@@ -63,7 +63,7 @@ function handleLighting(scene) {
     scene.add(spotLight.target);
 }
 
-function loadCustomObjs(scene, mtlURL, objURL, scale, x, z, rotate) {
+function loadCustomObjs(scene, mtlURL, objURL, scale, x, z, rotate, name) {
     return new Promise((resolve, reject) => {
         const mtlLoader = new MTLLoader();
         mtlLoader.load(mtlURL, (mtl) => {
@@ -71,6 +71,7 @@ function loadCustomObjs(scene, mtlURL, objURL, scale, x, z, rotate) {
             const objLoader = new OBJLoader();
             objLoader.setMaterials(mtl);
             objLoader.load(objURL, (loadedRoot) => {
+                loadedRoot.name = name;
                 loadedRoot.position.set(x, 0.01, z);
                 loadedRoot.scale.set(scale, scale, scale);
                 loadedRoot.rotation.set(0.0, rotate, 0.0);
@@ -106,9 +107,19 @@ function buildPokeball(scene, pokeballs, pokeballTexture, x, y, z) {
     scene.add(pokeball);
 }
 
+function attachEventListeners() {
+    document.getElementById("attackButton").addEventListener("click", () => showAttackOrStats('attack'));
+    document.getElementById("statsButton").addEventListener("click", () => showAttackOrStats('stats'));
+    document.getElementById("cancelButton").addEventListener("click", closeMenu);
+    document.getElementById("attack1").addEventListener("click", () => handleAttack(1));
+    document.getElementById("attack2").addEventListener("click", () => handleAttack(2));
+    document.getElementById("attack3").addEventListener("click", () => handleAttack(3));
+    document.getElementById("attack4").addEventListener("click", () => handleAttack(4));
+}
+
 async function main() {
-    const teamMirorB = [];
-    const teamSerena = [];
+    const teamM = [];
+    const teamS = [];
     const pokePositions = [];
     const pokeNames = ['Ludicolo', 'Absol', 'Altaria', 'Blaziken', 'Slaking', 'Aggron', 'Ludicolo1', 'Ludicolo2', 'Armaldo', 'Dragonite', 'Exploud', 'Ludicolo3'];
 
@@ -120,6 +131,7 @@ async function main() {
 		antialias: true
 	} );
     renderer.setSize(window.innerWidth * 0.9, window.innerHeight * 0.9);
+    attachEventListeners();
 
     // Camera Setup
     const fov = 80;
@@ -229,20 +241,20 @@ async function main() {
     const promisedPokes = [
         // Adding 3D Pokemon Models
         // Serena's Team
-        loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, 1.5, 1.5, 3 * Math.PI / 2),
-        loadCustomObjs(scene, 'Absol/Normal/Absol_Normal.mtl', 'Absol/Normal/Absol_Normal.obj', 3.0, 5.5, -3.5, 7 * Math.PI / 4),
-        loadCustomObjs(scene, 'Altaria/Normal/Altaria_Normal.mtl', 'Altaria/Normal/Altaria_Normal.obj', 2.5, 5.5, -0.5, 11 * Math.PI / 7),
-        loadCustomObjs(scene, 'Blaziken/Mega/Blaziken_Mega.mtl', 'Blaziken/Mega/Blaziken_Mega.obj', 2.5, 5.5, 2.0, 3 * Math.PI / 2),
-        loadCustomObjs(scene, 'Slaking/Slaking.mtl', 'Slaking/Slaking.obj', 2.5, 5.5, 4.75, 4 * Math.PI / 3),
-        loadCustomObjs(scene, 'Aggron/Normal/Aggron_Normal.mtl', 'Aggron/Normal/Aggron_Normal.obj', 2.5, 5.5, 7.5, 5 * Math.PI / 4),
+        loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, 1.5, 1.5, 3 * Math.PI / 2, 'LudicoloS'),
+        loadCustomObjs(scene, 'Absol/Normal/Absol_Normal.mtl', 'Absol/Normal/Absol_Normal.obj', 3.0, 5.5, -3.5, 7 * Math.PI / 4, 'Absol'),
+        loadCustomObjs(scene, 'Altaria/Normal/Altaria_Normal.mtl', 'Altaria/Normal/Altaria_Normal.obj', 2.5, 5.5, -0.5, 11 * Math.PI / 7, 'Altaria'),
+        loadCustomObjs(scene, 'Blaziken/Mega/Blaziken_Mega.mtl', 'Blaziken/Mega/Blaziken_Mega.obj', 2.5, 5.5, 2.0, 3 * Math.PI / 2, 'Blaziken'),
+        loadCustomObjs(scene, 'Slaking/Slaking.mtl', 'Slaking/Slaking.obj', 2.5, 5.5, 4.75, 4 * Math.PI / 3, 'Slaking'),
+        loadCustomObjs(scene, 'Aggron/Normal/Aggron_Normal.mtl', 'Aggron/Normal/Aggron_Normal.obj', 2.5, 5.5, 7.5, 5 * Math.PI / 4, 'Aggron'),
 
         // Miror B's Team
-        loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -1.5, 1.5, Math.PI / 2),
-        loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -4.5, -3.5, Math.PI / 4),
-        loadCustomObjs(scene, 'Armaldo/Armaldo.mtl', 'Armaldo/Armaldo.obj', 2.5, -4.5, -0.5, Math.PI / 3),
-        loadCustomObjs(scene, 'Dragonite/Dragonite.mtl', 'Dragonite/Dragonite.obj', 2.5, -4.5, 2.0, Math.PI / 2),
-        loadCustomObjs(scene, 'Exploud/Exploud.mtl', 'Exploud/Exploud.obj', 2.5, -4.5, 4.75, 11 * Math.PI / 18),
-        loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -4.5, 7.5, 3 * Math.PI / 4)
+        loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -1.5, 1.5, Math.PI / 2, 'Ludicolo1'),
+        loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -4.5, -3.5, Math.PI / 4, 'Ludicolo2'),
+        loadCustomObjs(scene, 'Armaldo/Armaldo.mtl', 'Armaldo/Armaldo.obj', 2.5, -4.5, -0.5, Math.PI / 3, 'Armaldo'),
+        loadCustomObjs(scene, 'Dragonite/Dragonite.mtl', 'Dragonite/Dragonite.obj', 2.5, -4.5, 2.0, Math.PI / 2, 'Dragonite'),
+        loadCustomObjs(scene, 'Exploud/Exploud.mtl', 'Exploud/Exploud.obj', 2.5, -4.5, 4.75, 11 * Math.PI / 18, 'Exploud'),
+        loadCustomObjs(scene, 'Ludicolo_Model/M/Ludicolo_M.mtl', 'Ludicolo_Model/M/Ludicolo_M.obj', 2.5, -4.5, 7.5, 3 * Math.PI / 4, 'Ludicolo3')
     ];
 
     const loadedPokes = await Promise.all(promisedPokes);
@@ -250,9 +262,9 @@ async function main() {
         const pos = new THREE.Vector3();
         poke.name = pokeNames[index];
         if (index < 6) {
-            teamSerena.push(poke);
+            teamS.push(poke);
         } else {
-            teamMirorB.push(poke);
+            teamM.push(poke);
         }
         pokePositions.push(poke.getWorldPosition(pos));
     });
@@ -264,23 +276,62 @@ async function main() {
     // Battle Sequence ===================================================================================================================
 
     // Initialize Current Pokemon Battling
-    let currentPokeSerena = 0;
-    let currentPokeMirorB = 0;
+    let currS = 0;
+    let currM = 0;
 
     const serenaHP = createHPBar(300);
     const mirorBHP = createHPBar(200);
     
 
-    teamSerena[currentPokeSerena].add(serenaHP);
-    teamMirorB[currentPokeMirorB].add(mirorBHP);
+    teamS[currS].add(serenaHP);
+    teamM[currM].add(mirorBHP);
 
     serenaHP.position.set(0, 1.5, 0);
     mirorBHP.position.set(0, 1.5, 0);
 
-    updateHPBar(serenaHP, 150);
-    updateHPBar(mirorBHP, 165);
+    // Main Battle Logic
+    let activeTurn = 0; // Serena = 0, Miror B = 1
+
+    const onClick = (event) => { 
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
+    
+        raycaster.setFromCamera(pointer, camera);
+        const intersects = raycaster.intersectObjects(scene.children, true);
+        if (intersects.length > 0) {
+            let object = intersects[0].object;
+            let selectedPoke = object.parent.name;
+            if (selectedPoke) {
+                if (activeTurn == 0) {
+                    if (selectedPoke == teamS[currS].name) {
+                        console.log('Serena is Thinking');
+                        toggleRaycaster(false);
+                        handleTurn(teamS[currS], teamM[currM], serenaHP, mirorBHP);
+                    }
+                } else if (activeTurn == 1) {
+                    if (selectedPoke == teamM[currM].name) {
+                        console.log('Miror B is Thinking');
+                    }
+                
+                }
+            }
+        }
+    }
+    
+    const pointer = new THREE.Vector2();
+    const raycaster = new THREE.Raycaster();
+
+    function toggleRaycaster(enabled) {
+        if (enabled) {
+            window.addEventListener('click', onClick);
+        } else {
+            window.removeEventListener('click', onClick);
+        }
+    }
+    window.addEventListener('click', onClick);
 
     // In Main Functions ===================================================================================================================
+
     // Function to help with loading different textures per cube side
     function loadTexture(path) {
         const texture = loader.load(path);

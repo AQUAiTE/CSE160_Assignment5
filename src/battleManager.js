@@ -55,5 +55,37 @@ function updateHPBar(bar, damageDealt) {
   return;
 }
 
+function handleTurn(playerPoke, oppPoke, playerHP, oppHP) {
+  openMenu();
+  console.log(playerPoke.name);
+  console.log(oppPoke.name);
+}
 
-export { createHPBar, updateHPBar };
+// Menu Handling
+function openMenu() {
+  document.getElementById("overlay").style.display = "block";
+  document.getElementById("menu").style.display = "block";
+}
+
+function closeMenu() {
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("attackMenu").style.display = "none";
+}
+
+  
+function showAttackOrStats(option) {
+  if (option === 'attack') {
+    document.getElementById("attackMenu").style.display = "block";
+  } else if (option === 'stats') {
+    console.log("Stats Menu");
+  }
+}
+
+function handleAttack(attack) {
+  console.log("Attack: " + attack);
+  closeMenu();
+}
+
+
+export { createHPBar, updateHPBar, handleTurn, openMenu, closeMenu, showAttackOrStats, handleAttack };
