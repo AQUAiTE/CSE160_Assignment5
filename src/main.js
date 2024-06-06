@@ -5,7 +5,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { cameraGUI } from './cameraGUI.js';
-import { createHPBar, updateHPBar, handleTurn, openMenu, closeMenu, showAttackOrStats, handleAttack, raycasterEnabled } from './battleManager.js';
+import { createHPBar, updateHPBar, initTurn, openMenu, closeMenu, showAttackOrStats, handleAttack, raycasterEnabled, damage0, damage1, activeTurn } from './battleManager.js';
 
 function updateCamera(c) {
     c.updateProjectionMatrix();
@@ -290,7 +290,9 @@ async function main() {
     mirorBHP.position.set(0, 1.5, 0);
 
     // Main Battle Logic
-    let activeTurn = 0; // Serena = 0, Miror B = 1
+    let turn = activeTurn; // Serena = 0, Miror B = 1
+    let dmg0 = damage0;
+    let dmg1 = damage1;
 
     const onClick = (event) => { 
         pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -302,17 +304,24 @@ async function main() {
             let object = intersects[0].object;
             let selectedPoke = object.parent.name;
             if (selectedPoke) {
-                if (activeTurn == 0) {
+                if (turn == 0) {
                     if (selectedPoke == teamS[currS].name) {
                         console.log('Serena is Thinking');
-                        handleTurn(teamS[currS], teamM[currM], serenaHP, mirorBHP);
+                        initTurn(teamS[currS], teamM[currM], 0);
+                        console.log("Test");
                     }
-                } else if (activeTurn == 1) {
+                } 
+                
+                if (activeTurn == 1) {
                     if (selectedPoke == teamM[currM].name) {
                         console.log('Miror B is Thinking');
+                        initTurn(teamS[currS], teamM[currM], 1);
+                       // window.removeEventListener('click', onClick);
+                       // enactTurn();
+                       // window.addEventListener('click', onClick);
                     }
-                
                 }
+
             }
         } 
     }

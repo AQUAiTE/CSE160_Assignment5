@@ -5,12 +5,15 @@
 import * as THREE from 'three';
 
 let raycasterEnabled = true;
+let damage0 = 0;
+let damage1 = 0;
 
 let poke1 = '';
 let poke2 = '';
+let attack0 = -1;
 let attack1 = -1;
-let attack2 = -1;
-let player = -1;
+let player = 0;
+let activeTurn = 0;
 
 const movesets = {
   'Absol' : ['Slash', 'Psycho Cut', 'Aerial Ace', 'Stone Edge'],
@@ -157,11 +160,66 @@ function updateHPBar(bar, damageDealt) {
   return;
 }
 
-function handleTurn(playerPoke, oppPoke, playerHP, oppHP, player) {
+function whichPoke() {
+  if (player == 0) {
+    return poke1.name;
+  }
+  
+  return poke2.name;
+}
+
+function handleAttack(attack) {
+  let poke = whichPoke();
+  console.log(poke);
+
+  if (player == 0) {
+    if (attack == 1) {
+      attack0 = movesets[poke][0];
+    } else if (attack == 2) {
+      attack0 = movesets[poke][1];
+    } else if (attack == 3) {
+      attack0 = movesets[poke][2];
+    } else {
+      attack0 = movesets[poke][3];
+    }
+    console.log('Attack: ' + attack0);
+  } else {
+    if (attack == 1) {
+      attack1 = movesets[poke][0];
+    } else if (attack == 2) {
+      attack1 = movesets[poke][1];
+    } else if (attack == 3) {
+      attack1 = movesets[poke][2];
+    } else {
+      attack1 = movesets[poke][3];
+    }
+    console.log('Attack: ' + attack1);
+  }
+
+  calculateDamage();
+  closeMenu();
+}
+
+function calculateDamage() {
+  let poke = whichPoke();
+
+  // Determine if using physical or special
+
+  let damage = (2 * 100) / 5 + 2;
+}
+
+function initTurn(p1, p2, p) {
+  console.log("HELLO");
+  poke1 = p1;
+  poke2 = p2;
+  player = p;
   openMenu();
-  poke1 = playerPoke;
-  poke2 = oppPoke;
-  player = player;
+  console.log(player);
+}
+
+function switchTurn(turn) {
+  player = (turn === 0) ? 1 : 0;
+  activeTurn = player;
 }
 
 // Menu Handling
@@ -175,6 +233,7 @@ function closeMenu() {
   document.getElementById('overlay').style.display = 'none';
   document.getElementById('menu').style.display = 'none';
   document.getElementById('attackMenu').style.display = 'none';
+  switchTurn();
   raycasterEnabled = true;
 }
 
@@ -187,12 +246,4 @@ function showAttackOrStats(option) {
   }
 }
 
-function handleAttack(attack) {
-  console.log('Attack: ' + attack);
-  if (attack == 1) {
-    attack1 = 0;
-  }
-}
-
-
-export { createHPBar, updateHPBar, handleTurn, openMenu, closeMenu, showAttackOrStats, handleAttack, raycasterEnabled };
+export { createHPBar, updateHPBar, initTurn, openMenu, closeMenu, showAttackOrStats, handleAttack, raycasterEnabled, damage0, damage1, activeTurn };
