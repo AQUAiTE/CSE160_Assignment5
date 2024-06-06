@@ -5,7 +5,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { cameraGUI } from './cameraGUI.js';
-import { createHPBar, updateHPBar, handleTurn, openMenu, closeMenu, showAttackOrStats, handleAttack } from './battleManager.js';
+import { createHPBar, updateHPBar, handleTurn, openMenu, closeMenu, showAttackOrStats, handleAttack, raycasterEnabled } from './battleManager.js';
 
 function updateCamera(c) {
     c.updateProjectionMatrix();
@@ -298,14 +298,13 @@ async function main() {
     
         raycaster.setFromCamera(pointer, camera);
         const intersects = raycaster.intersectObjects(scene.children, true);
-        if (intersects.length > 0) {
+        if (intersects.length > 0 && raycasterEnabled) {
             let object = intersects[0].object;
             let selectedPoke = object.parent.name;
             if (selectedPoke) {
                 if (activeTurn == 0) {
                     if (selectedPoke == teamS[currS].name) {
                         console.log('Serena is Thinking');
-                        toggleRaycaster(false);
                         handleTurn(teamS[currS], teamM[currM], serenaHP, mirorBHP);
                     }
                 } else if (activeTurn == 1) {
@@ -315,19 +314,12 @@ async function main() {
                 
                 }
             }
-        }
+        } 
     }
     
     const pointer = new THREE.Vector2();
     const raycaster = new THREE.Raycaster();
 
-    function toggleRaycaster(enabled) {
-        if (enabled) {
-            window.addEventListener('click', onClick);
-        } else {
-            window.removeEventListener('click', onClick);
-        }
-    }
     window.addEventListener('click', onClick);
 
     // In Main Functions ===================================================================================================================
