@@ -173,10 +173,10 @@ const moveStats = {
   'Dragon Claw' : ['Dragon', 80, 100, 0, 0, 0],
   'Earthquake' : ['Ground', 100, 100, 0, 0, 0],
   'Fake Out' : ['Normal', 40, 100, 0, 0, 0],
-  'Giga Drain' : ['Grass', 75, 100, 0, 50, 1],
+  'Giga Drain' : ['Grass', 75, 100, 0, 0.5, 1],
   'Giga Impact' : ['Normal', 150, 90, 0, 0, 0],
   'Hammer Arm' : ['Fighting', 100, 90, 0, 0, 0],
-  'Ice Beam' : ['Ice', 90, 100, 0, 0, 1],
+  'Ice Beam' : ['Ice', 90, 25, 0, 0, 1],
   'Ice Fang' : ['Ice', 65, 95, 0, 0, 0],
   'Iron Head' : ['Steel', 80, 100, 0, 0, 0],
   'Moonblast' : ['Fairy', 95, 100, 0, 0, 1],
@@ -229,7 +229,8 @@ function createHPBar(pokemon) {
 }
 
 function updateHPBar(bar, damageDealt) {
-  const newHP = Math.max(bar.currentHP - damageDealt, 0);
+  // Healing may be applied, don't let it go above the maxHP
+  const newHP = Math.min(Math.max(bar.currentHP - damageDealt, 0), bar.maxHP);
 
   if (newHP <= 0) {
     bar.hpBar.currentHP = 0;
@@ -240,7 +241,6 @@ function updateHPBar(bar, damageDealt) {
     bar.hpBar.material.color.set(0xffdc09)
   }
   
-  console.log(newHP / bar.maxHP);
   bar.hpBar.scale.x = 1 * (newHP / bar.maxHP);
   bar.currentHP = newHP;
 
@@ -258,7 +258,6 @@ function whichPokemon() {
 
 function handleAttack(attack) {
   const pokemon = whichPokemon();
-  console.log(pokemon);
 
   if (player == 0) {
     if (attack == 1) {
@@ -270,7 +269,6 @@ function handleAttack(attack) {
     } else {
       attack0 = movesets[pokemon][3];
     }
-    console.log('Attack: ' + attack0);
   } else {
     if (attack == 1) {
       attack1 = movesets[pokemon][0];
@@ -281,7 +279,6 @@ function handleAttack(attack) {
     } else {
       attack1 = movesets[pokemon][3];
     }
-    console.log('Attack: ' + attack1);
   }
 
   closeMenu(0);
@@ -349,15 +346,12 @@ function calculateDamage(attacker, defender, atk) {
   // Apply STAB, Type Effectivness, and Variability
   damage *= rand * stab  * typeEffect;
 
-  console.log("DAMAGE: " + Math.floor(damage));
-
   return Math.floor(damage);
 }
 
 
 // Handling Turns and Fainted Pokemon
 function initTurn(p1, p2, p, hp) {
-  console.log("HELLO");
   poke1 = p1.name;
   poke2 = p2.name;
   player = p;
@@ -367,14 +361,54 @@ function initTurn(p1, p2, p, hp) {
     hp2 = hp;
   }
   openMenu();
-  console.log(player);
 }
 
 function processTurn() {
   let first = poke1;
 
-  const dmg1 = calculateDamage(poke1, poke2, attack0);
-  const dmg2 = calculateDamage(poke2, poke1, attack1);
+  let dmg1 = calculateDamage(poke1, poke2, attack0);
+  let dmg2 = calculateDamage(poke2, poke1, attack1);
+
+  let acc1 = Math.random() * 100;
+  let acc2 = Math.random() * 100;
+
+  if (acc1 >= moveStats[attack0][2]) {
+    dmg1 = 0;
+    alert(`${poke1}'s Attack Missed!`);
+  }
+
+  if (acc2 >= moveStats[attack1][2]) {
+    dmg2 = 0;
+    alert(`${poke2}'s Attack Missed!`);
+  }
+
+  // Determine if any healing/recoil is involved
+  let heal1 = 0;
+  let heal2 = 0;
+  let recoil1 = 0;
+  let recoil2 = 0;
+  let isHealRecoil1 = false;
+  let isHealRecoil2 = false;
+
+  if (moveStats[attack0][3] > 0) {
+    recoil1 = dmg1 * moveStats[attack0][3];
+    isHealRecoil1 = true;
+  } 
+  
+  if (moveStats[attack1][3] > 0) {
+    recoil2 = dmg2 * moveStats[attack1][3];
+    isHealRecoil2 = true;
+  }
+
+  if (moveStats[attack0][4] > 0) {
+    heal1 = dmg1 * moveStats[attack0][4];
+    isHealRecoil1 = true;
+  }
+  
+  if (moveStats[attack1][4] > 0) {
+    heal2 = dmg2 * moveStats[attack1][4];
+    isHealRecoil2 = true;
+  }
 
   // Determine turn order
   if (stats[poke1][5] > stats[poke2][5]) {
@@ -389,11 +423,19 @@ function processTurn() {
   // Damage pokemon 2 first, then check if it fainted
   if (first === poke1) {
     let newHP = hp2.currentHP - dmg1;
+    let selfHPUpdate = -heal1 + recoil1;
+
     updateHPBar(hp2, dmg1);
-    console.log(newHP);
+    if (isHealRecoil1) {
+      updateHPBar(hp1, selfHPUpdate); 
+    }
+
     if (newHP > 0) {
       newHP = hp1.currentHP - dmg2;
       setTimeout(() => { updateHPBar(hp1, dmg2); }, 500); 
+      if (isHealRecoil2) {
+        updateHPBar(hp2, -heal2 + recoil2);
+      }
       if (newHP <= 0) {
         activeTurn = 2;
         faintedPokemon = poke1;
@@ -414,14 +456,24 @@ function processTurn() {
       }
       alert('MirorB, please swap out your fainted Pokemon!');
     }
+
   }
   // Damage pokemon 1 first then check if it fainted
   else {
     let newHP = hp1.currentHP - dmg2;
+    let selfHPUpdate = -heal2 + recoil2;
+
     updateHPBar(hp1, dmg2);
+    if (isHealRecoil2) {
+      updateHPBar(hp2, selfHPUpdate);
+    }
+
     if (newHP > 0) {
       newHP = hp2.currentHP - dmg1;
       setTimeout(() => { updateHPBar(hp2, dmg1); }, 500); 
+      if (isHealRecoil1) {
+        updateHPBar(hp1, -heal1 + recoil1);
+      }
       if (newHP <= 0) {
         activeTurn = 2;
         faintedPokemon = poke2;
@@ -443,7 +495,6 @@ function processTurn() {
       alert('Serena, please swap out your fainted Pokemon!');
     }
   }
-  
 
   setTimeout(() => {  raycasterEnabled = true; }, 100);
 }
@@ -536,8 +587,6 @@ function generateStatsMenu(pokemon) {
     type2 = "/" + type2;
     spanColor = `background-image: linear-gradient(to top right, ${typeColor1}, ${typeColor2})`;
   }
-
-  console.log(spanColor);
 
   const stats1 = document.getElementById("stats1");
   const stats2 = document.getElementById("stats2");

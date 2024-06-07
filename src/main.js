@@ -314,7 +314,6 @@ async function main() {
                 generateStatsMenu(selectedPoke.name);
                 if (activeTurn == 0) {
                     if (selectedPoke.name == teamS[currS].name) {
-                        console.log('Serena is Thinking');
                         initTurn(teamS[currS], teamM[currM], 0, serenaHP);
                     } else if (teamS.includes(selectedPoke)) {
                         showAttackOrStats('stats2', activeTurn);
@@ -323,7 +322,6 @@ async function main() {
                 
                 if (activeTurn == 1) {
                     if (selectedPoke.name == teamM[currM].name) {
-                        console.log('Miror B is Thinking');
                         initTurn(teamS[currS], teamM[currM], 1, mirorBHP);
                     } else if (teamM.includes(selectedPoke)) {
                         showAttackOrStats('stats2', activeTurn);
