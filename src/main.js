@@ -5,7 +5,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { cameraGUI } from './cameraGUI.js';
-import { createHPBar, updateHPBar, initTurn, openMenu, closeMenu, showAttackOrStats, handleAttack, raycasterEnabled, damage0, damage1, activeTurn } from './battleManager.js';
+import { createHPBar, updateHPBar, initTurn, openMenu, closeMenu, showAttackOrStats, newPokemonSelected, handleAttack, raycasterEnabled, faintedPokemon, activeTurn } from './battleManager.js';
+import { seededRandom } from 'three/src/math/MathUtils.js';
 
 function updateCamera(c) {
     c.updateProjectionMatrix();
@@ -278,9 +279,11 @@ async function main() {
     // Initialize Current Pokemon Battling
     let currS = 0;
     let currM = 0;
+    let availableS = 5;
+    let availableM = 5;
 
-    const serenaHP = createHPBar(teamS[currS].name);
-    const mirorBHP = createHPBar(teamM[currM].name);
+    let serenaHP = createHPBar(teamS[currS].name);
+    let mirorBHP = createHPBar(teamM[currM].name);
     
 
     teamS[currS].add(serenaHP);
@@ -299,10 +302,10 @@ async function main() {
         const intersects = raycaster.intersectObjects(scene.children, true);
         if (intersects.length > 0 && raycasterEnabled) {
             let object = intersects[0].object;
-            let selectedPoke = object.parent.name;
+            let selectedPoke = object.parent;
             if (selectedPoke) {
                 if (activeTurn == 0) {
-                    if (selectedPoke == teamS[currS].name) {
+                    if (selectedPoke.name == teamS[currS].name) {
                         console.log('Serena is Thinking');
                         initTurn(teamS[currS], teamM[currM], 0, serenaHP);
                         console.log("Test");
@@ -310,10 +313,53 @@ async function main() {
                 } 
                 
                 if (activeTurn == 1) {
-                    if (selectedPoke == teamM[currM].name) {
+                    if (selectedPoke.name == teamM[currM].name) {
                         console.log('Miror B is Thinking');
                         initTurn(teamS[currS], teamM[currM], 1, mirorBHP);
-                       // enactTurn();
+                    }
+                }
+
+                if (activeTurn == 2) {
+                    // Enable Serena's Pokemon to be selected
+                    if (faintedPokemon == teamS[currS].name) {
+                        if (availableS == 0) {
+                            scene.remove(teamS[currS]);
+                            window.removeEventListener('click', onClick);
+                        }
+
+                        scene.remove(teamS[currS]);
+                        teamS[currS].remove(serenaHP);
+                        if (teamS.includes(selectedPoke) && selectedPoke.name != faintedPokemon) {
+                            console.log("Serena Chose: " + selectedPoke.name);
+                            currS = teamS.indexOf(selectedPoke);
+                            selectedPoke.position.x = 1.5;
+                            selectedPoke.position.z = 1.5;
+                            selectedPoke.rotation.set(0, 3 * Math.PI / 2, 0);
+                            serenaHP = createHPBar(teamS[currS].name);
+                            teamS[currS].add(serenaHP);
+                            serenaHP.position.set(0, 1.5, 0);
+                            availableS--;
+                            newPokemonSelected();
+                        }
+                    } else { // Enable Miror B's Pokemon to be selected
+                        if (availableM == 0) {
+                            scene.remove(teamM[currM]);
+                            window.removeEventListener('click', onClick);
+                        }
+
+                        if (teamM.includes(selectedPoke) && selectedPoke.name != faintedPokemon) {
+                            scene.remove(teamM[currM]);
+                            teamM[currM].remove(mirorBHP);
+                            currM = teamM.indexOf(selectedPoke);
+                            selectedPoke.position.x = -1.5;
+                            selectedPoke.position.z = 1.5;
+                            selectedPoke.rotation.set(0, Math.PI / 2, 0);
+                            mirorBHP = createHPBar(teamM[currM].name);
+                            teamM[currM].add(mirorBHP);
+                            mirorBHP.position.set(0, 1.5, 0);
+                            availableM--;
+                            newPokemonSelected();
+                        }
                     }
                 }
 

@@ -5,8 +5,6 @@
 import * as THREE from 'three';
 
 let raycasterEnabled = true;
-let damage0 = 0;
-let damage1 = 0;
 
 let poke1 = '';
 let poke2 = '';
@@ -16,6 +14,9 @@ let hp1 = -1;
 let hp2 = -1;
 let player = 0;
 let activeTurn = 0;
+let faintedPokemon = '';
+let sPokes = 6;
+let mPokes = 6;
 
 const movesets = {
   'Absol' : ['Slash', 'Psycho Cut', 'Aerial Ace', 'Stone Edge'],
@@ -133,8 +134,8 @@ const stats = {
   'Blaziken' : [270, 220, 130, 202, 130, 148],
   'Dragonite' : [292, 245, 175, 184, 184, 148],
   'Exploud' : [318, 168, 117, 168, 135, 126],
-  'Ludicolo' : [270, 130, 130, 166, 184, 130],
-  'Ludicolo1' : [270, 130, 130, 166, 184, 130],
+  'Ludicolo' : [30, 130, 130, 166, 184, 130],
+  'Ludicolo1' : [30, 130, 130, 166, 184, 130],
   'Ludicolo2' : [255, 140, 130, 166, 184, 133],
   'Ludicolo3' : [270, 120, 135, 170, 180, 135],
   'Slaking' : [410, 292, 184, 175, 121, 284]
@@ -205,7 +206,7 @@ function createHPBar(pokemon) {
 }
 
 function updateHPBar(bar, damageDealt) {
-  const newHP = bar.currentHP - damageDealt;
+  const newHP = Math.max(bar.currentHP - damageDealt, 0);
 
   if (newHP <= 0) {
     bar.hpBar.currentHP = 0;
@@ -324,7 +325,7 @@ function calculateDamage(attacker, defender, atk) {
   // Apply STAB, Type Effectivness, and Variability
   damage *= rand * stab  * typeEffect;
 
-  console.log(Math.floor(damage));
+  console.log("DAMAGE: " + Math.floor(damage));
 
   return Math.floor(damage);
 }
@@ -345,7 +346,6 @@ function initTurn(p1, p2, p, hp) {
 
 function processTurn() {
   let first = poke1;
-  let second = poke2;
 
   const dmg1 = calculateDamage(poke1, poke2, attack0);
   const dmg2 = calculateDamage(poke2, poke1, attack1);
@@ -353,14 +353,11 @@ function processTurn() {
   // Determine turn order
   if (stats[poke1][5] > stats[poke2][5]) {
     first = poke1;
-    second = poke2;
   } else if (stats[poke2][5] > stats[poke1][5]) {
     first = poke2;
-    second = poke1;
   } else {
     let coinflip = Math.random() * 100;
     first = (coinflip > 50) ? poke1 : poke2;
-    second = (coinflip > 50) ? poke2 : poke1;
   }
 
   console.log(hp1.currentHP);
@@ -368,17 +365,59 @@ function processTurn() {
 
   // Damage pokemon 2 first, then check if it fainted
   if (first === poke1) {
+    let newHP = hp2.currentHP - dmg1;
     updateHPBar(hp2, dmg1);
-
-    if (hp2.currentHP - dmg2 > 0) {
+    console.log(newHP);
+    if (newHP > 0) {
+      newHP = hp1.currentHP - dmg2;
       setTimeout(() => { updateHPBar(hp1, dmg2); }, 500); 
+      if (newHP <= 0) {
+        activeTurn = 2;
+        faintedPokemon = poke1;
+        sPokes--;
+        if (sPokes == 0) {
+          alert("MirorB Wins!");
+          return;
+        }
+        alert('Serena, please swap out your fainted Pokemon!');
+      }
+    } else {
+      activeTurn = 2;
+      faintedPokemon = poke2;
+      mPokes--;
+      if (mPokes == 0) {
+        alert("Serena Wins!");
+        return;
+      }
+      alert('MirorB, please swap out your fainted Pokemon!');
     }
   }
   // Damage pokemon 1 first then check if it fainted
   else {
+    let newHP = hp1.currentHP - dmg2;
     updateHPBar(hp1, dmg2);
-    if (hp1.currentHP - dmg1 > 0) {
+    if (newHP > 0) {
+      newHP = hp2.currentHP - dmg1;
       setTimeout(() => { updateHPBar(hp2, dmg1); }, 500); 
+      if (newHP <= 0) {
+        activeTurn = 2;
+        faintedPokemon = poke2;
+        mPokes--;
+        if (mPokes == 0) {
+          alert("Serena Wins!");
+          return;
+        }
+        alert('MirorB, please swap out your fainted Pokemon!');
+      }
+    } else {
+      activeTurn = 2;
+      faintedPokemon = poke1;
+      sPokes--;
+      if (sPokes == 0) {
+        alert("MirorB Wins!");
+        return;
+      }
+      alert('Serena, please swap out your fainted Pokemon!');
     }
   }
 
@@ -402,7 +441,9 @@ function closeMenu(isCancel) {
   document.getElementById('menu').style.display = 'none';
   document.getElementById('attackMenu').style.display = 'none';
   if (!isCancel) {
-    switchTurn(player);
+    if (activeTurn != 2) {
+      switchTurn(player);
+    }
     // Avoid situation where clicking attack overlapping with other pokemon opens the other menu immediately
     if (player == 1) {
       setTimeout(() => {  raycasterEnabled = true; }, 100);
@@ -423,4 +464,8 @@ function showAttackOrStats(option) {
   }
 }
 
-export { createHPBar, updateHPBar, initTurn, openMenu, closeMenu, showAttackOrStats, handleAttack, raycasterEnabled, damage0, damage1, activeTurn };
+function newPokemonSelected() {
+  activeTurn = 0;
+}
+
+export { createHPBar, updateHPBar, initTurn, openMenu, closeMenu, showAttackOrStats, handleAttack, newPokemonSelected, raycasterEnabled, faintedPokemon, activeTurn };
