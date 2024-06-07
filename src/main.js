@@ -5,8 +5,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { cameraGUI } from './cameraGUI.js';
-import { createHPBar, updateHPBar, initTurn, openMenu, closeMenu, showAttackOrStats, newPokemonSelected, handleAttack, raycasterEnabled, faintedPokemon, activeTurn } from './battleManager.js';
-import { seededRandom } from 'three/src/math/MathUtils.js';
+import { createHPBar, initTurn, generateAttackMenu, generateStatsMenu, closeMenu, backtrackMenu, showAttackOrStats, newPokemonSelected, handleAttack, raycasterEnabled, faintedPokemon, activeTurn } from './battleManager.js';
 
 function updateCamera(c) {
     c.updateProjectionMatrix();
@@ -109,13 +108,21 @@ function buildPokeball(scene, pokeballs, pokeballTexture, x, y, z) {
 }
 
 function attachEventListeners() {
-    document.getElementById("attackButton").addEventListener("click", () => showAttackOrStats('attack'));
-    document.getElementById("statsButton").addEventListener("click", () => showAttackOrStats('stats'));
+    document.getElementById("attackButton").addEventListener("click", () => showAttackOrStats('attack', activeTurn));
+    document.getElementById("statsButton").addEventListener("click", () => showAttackOrStats('stats', activeTurn));
     document.getElementById("cancelButton").addEventListener("click", () => closeMenu(1));
-    document.getElementById("attack1").addEventListener("click", () => handleAttack(1));
-    document.getElementById("attack2").addEventListener("click", () => handleAttack(2));
-    document.getElementById("attack3").addEventListener("click", () => handleAttack(3));
-    document.getElementById("attack4").addEventListener("click", () => handleAttack(4));
+    document.getElementById("cancelButton2").addEventListener("click", () => backtrackMenu(true));
+    document.getElementById("cancelButton3").addEventListener("click", () => backtrackMenu(true));
+    document.getElementById("return").addEventListener("click", () => backtrackMenu(true));
+    document.getElementById("closeStats").addEventListener("click", () => backtrackMenu(false));
+    document.getElementById("attack1-0").addEventListener("click", () => handleAttack(1));
+    document.getElementById("attack2-0").addEventListener("click", () => handleAttack(2));
+    document.getElementById("attack3-0").addEventListener("click", () => handleAttack(3));
+    document.getElementById("attack4-0").addEventListener("click", () => handleAttack(4));
+    document.getElementById("attack1-1").addEventListener("click", () => handleAttack(1));
+    document.getElementById("attack2-1").addEventListener("click", () => handleAttack(2));
+    document.getElementById("attack3-1").addEventListener("click", () => handleAttack(3));
+    document.getElementById("attack4-1").addEventListener("click", () => handleAttack(4));
 }
 
 async function main() {
@@ -276,21 +283,21 @@ async function main() {
 
     // Battle Sequence ===================================================================================================================
 
-    // Initialize Current Pokemon Battling
+    // Hardcoded first pokemon initialization
     let currS = 0;
     let currM = 0;
     let availableS = 5;
     let availableM = 5;
 
+    // Generate HP bars and Attack Menus
     let serenaHP = createHPBar(teamS[currS].name);
     let mirorBHP = createHPBar(teamM[currM].name);
-    
-
     teamS[currS].add(serenaHP);
     teamM[currM].add(mirorBHP);
-
     serenaHP.position.set(0, 1.5, 0);
     mirorBHP.position.set(0, 1.5, 0);
+    generateAttackMenu(teamS[currS].name, 0);
+    generateAttackMenu(teamM[currM].name, 1);
 
     // Main Battle Logic
 
@@ -303,12 +310,14 @@ async function main() {
         if (intersects.length > 0 && raycasterEnabled) {
             let object = intersects[0].object;
             let selectedPoke = object.parent;
-            if (selectedPoke) {
+            if (teamM.includes(selectedPoke) || teamS.includes(selectedPoke)) {
+                generateStatsMenu(selectedPoke.name);
                 if (activeTurn == 0) {
                     if (selectedPoke.name == teamS[currS].name) {
                         console.log('Serena is Thinking');
                         initTurn(teamS[currS], teamM[currM], 0, serenaHP);
-                        console.log("Test");
+                    } else if (teamS.includes(selectedPoke)) {
+                        showAttackOrStats('stats2', activeTurn);
                     }
                 } 
                 
@@ -316,6 +325,8 @@ async function main() {
                     if (selectedPoke.name == teamM[currM].name) {
                         console.log('Miror B is Thinking');
                         initTurn(teamS[currS], teamM[currM], 1, mirorBHP);
+                    } else if (teamM.includes(selectedPoke)) {
+                        showAttackOrStats('stats2', activeTurn);
                     }
                 }
 
@@ -339,6 +350,7 @@ async function main() {
                             teamS[currS].add(serenaHP);
                             serenaHP.position.set(0, 1.5, 0);
                             availableS--;
+                            generateAttackMenu(selectedPoke.name, 0);
                             newPokemonSelected();
                         }
                     } else { // Enable Miror B's Pokemon to be selected
@@ -358,6 +370,7 @@ async function main() {
                             teamM[currM].add(mirorBHP);
                             mirorBHP.position.set(0, 1.5, 0);
                             availableM--;
+                            generateAttackMenu(selectedPoke.name, 1);
                             newPokemonSelected();
                         }
                     }

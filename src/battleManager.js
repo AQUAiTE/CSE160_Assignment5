@@ -124,6 +124,27 @@ const types = {
   'Slaking' : ['Normal']
 }
 
+const moveColors = {
+	'Normal': '#A8A77A',
+	'Fire': '#EE8130',
+	'Water': '#6390F0',
+	'Electric': '#F7D02C',
+	'Grass': '#7AC74C',
+	'Ice': '#96D9D6',
+	'Fighting': '#C22E28',
+	'Poison': '#A33EA1',
+	'Ground': '#E2BF65',
+	'Flying': '#A98FF3',
+	'Psychic': '#F95587',
+	'Bug': '#A6B91A',
+	'Rock': '#B6A136',
+	'Ghost': '#735797',
+	'Dragon': '#6F35FC',
+	'Dark': '#705746',
+	'Steel': '#B7B7CE',
+	'Fairy': '#D685AD',
+};
+
 // Format
 // [HP, Physical Atk, Phys Defense, Special Atk, Special Defense, Speed]
 const stats = {
@@ -134,10 +155,10 @@ const stats = {
   'Blaziken' : [270, 220, 130, 202, 130, 148],
   'Dragonite' : [292, 245, 175, 184, 184, 148],
   'Exploud' : [318, 168, 117, 168, 135, 126],
-  'Ludicolo' : [30, 130, 130, 166, 184, 130],
-  'Ludicolo1' : [30, 130, 130, 166, 184, 130],
+  'Ludicolo' : [270, 130, 130, 166, 184, 130],
+  'Ludicolo1' : [270, 130, 130, 166, 184, 130],
   'Ludicolo2' : [255, 140, 130, 166, 184, 133],
-  'Ludicolo3' : [270, 120, 135, 170, 180, 135],
+  'Ludicolo3' : [270, 120, 135, 175, 180, 135],
   'Slaking' : [410, 292, 184, 175, 121, 284]
 }
 
@@ -150,7 +171,7 @@ const moveStats = {
   'Brave Bird' : ['Flying', 120, 100, 0.33, 0, 0],
   'Crunch' : ['Dark', 80, 100, 0, 0, 0],
   'Dragon Claw' : ['Dragon', 80, 100, 0, 0, 0],
-  'Earthquake' : ['Earthquake', 100, 100, 0, 0, 0],
+  'Earthquake' : ['Ground', 100, 100, 0, 0, 0],
   'Fake Out' : ['Normal', 40, 100, 0, 0, 0],
   'Giga Drain' : ['Grass', 75, 100, 0, 50, 1],
   'Giga Impact' : ['Normal', 150, 90, 0, 0, 0],
@@ -165,13 +186,15 @@ const moveStats = {
   'Sky Uppercut' : ['Fighting', 85, 90, 0, 0, 0],
   'Slash' : ['Normal', 70, 100, 0, 0, 0],
   'Steel Wing' : ['Steel', 70, 90, 0, 0, 0],
-  'Stone Edge' : ['Rock', 10, 80, 0, 0, 0],
+  'Stone Edge' : ['Rock', 100, 80, 0, 0, 0],
   'Strength' : ['Normal', 80, 100, 0, 0, 0],
   'Surf' : ['Water', 90, 100, 0, 0, 1],
   'Thunder Punch' : ['Electric', 75, 100, 0, 0, 0],
   'X-Scissor' : ['Bug', 80, 100, 0, 0, 0]
 }
 
+
+// Handling Healthbars
 function createHPBar(pokemon) {
   // Store HP Values
   const currentHP = stats[pokemon][0];
@@ -224,7 +247,8 @@ function updateHPBar(bar, damageDealt) {
   return;
 }
 
-function whichPoke() {
+// Handling Attacks
+function whichPokemon() {
   if (player == 0) {
     return poke1;
   }
@@ -233,29 +257,29 @@ function whichPoke() {
 }
 
 function handleAttack(attack) {
-  const poke = whichPoke();
-  console.log(poke);
+  const pokemon = whichPokemon();
+  console.log(pokemon);
 
   if (player == 0) {
     if (attack == 1) {
-      attack0 = movesets[poke][0];
+      attack0 = movesets[pokemon][0];
     } else if (attack == 2) {
-      attack0 = movesets[poke][1];
+      attack0 = movesets[pokemon][1];
     } else if (attack == 3) {
-      attack0 = movesets[poke][2];
+      attack0 = movesets[pokemon][2];
     } else {
-      attack0 = movesets[poke][3];
+      attack0 = movesets[pokemon][3];
     }
     console.log('Attack: ' + attack0);
   } else {
     if (attack == 1) {
-      attack1 = movesets[poke][0];
+      attack1 = movesets[pokemon][0];
     } else if (attack == 2) {
-      attack1 = movesets[poke][1];
+      attack1 = movesets[pokemon][1];
     } else if (attack == 3) {
-      attack1 = movesets[poke][2];
+      attack1 = movesets[pokemon][2];
     } else {
-      attack1 = movesets[poke][3];
+      attack1 = movesets[pokemon][3];
     }
     console.log('Attack: ' + attack1);
   }
@@ -330,6 +354,8 @@ function calculateDamage(attacker, defender, atk) {
   return Math.floor(damage);
 }
 
+
+// Handling Turns and Fainted Pokemon
 function initTurn(p1, p2, p, hp) {
   console.log("HELLO");
   poke1 = p1.name;
@@ -359,9 +385,6 @@ function processTurn() {
     let coinflip = Math.random() * 100;
     first = (coinflip > 50) ? poke1 : poke2;
   }
-
-  console.log(hp1.currentHP);
-  console.log(hp2.currentHP);
 
   // Damage pokemon 2 first, then check if it fainted
   if (first === poke1) {
@@ -420,6 +443,7 @@ function processTurn() {
       alert('Serena, please swap out your fainted Pokemon!');
     }
   }
+  
 
   setTimeout(() => {  raycasterEnabled = true; }, 100);
 }
@@ -427,6 +451,10 @@ function processTurn() {
 function switchTurn(turn) {
   player = (turn === 0) ? 1 : 0;
   activeTurn = player;
+}
+
+function newPokemonSelected() {
+  activeTurn = 0;
 }
 
 // Menu Handling
@@ -439,7 +467,8 @@ function openMenu() {
 function closeMenu(isCancel) {
   document.getElementById('overlay').style.display = 'none';
   document.getElementById('menu').style.display = 'none';
-  document.getElementById('attackMenu').style.display = 'none';
+  document.getElementById('attackMenu0').style.display = 'none';
+  document.getElementById('attackMenu1').style.display = 'none';
   if (!isCancel) {
     if (activeTurn != 2) {
       switchTurn(player);
@@ -455,17 +484,51 @@ function closeMenu(isCancel) {
   }
 }
 
-  
-function showAttackOrStats(option) {
-  if (option === 'attack') {
-    document.getElementById('attackMenu').style.display = 'block';
-  } else if (option === 'stats') {
-    console.log('Stats Menu');
+function backtrackMenu(isActive) {
+  document.getElementById('attackMenu0').style.display = 'none';
+  document.getElementById('attackMenu1').style.display = 'none';
+  document.getElementById('statsMenu').style.display = 'none';
+  document.getElementById('statsMenu2').style.display = 'none';
+  if (isActive)
+  {  
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('menu').style.display = 'block';
+    raycasterEnabled = false;
+  } else {
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('menu').style.display = 'none';
+    setTimeout(() => {  raycasterEnabled = true; }, 100);
   }
 }
 
-function newPokemonSelected() {
-  activeTurn = 0;
+function generateAttackMenu(pokemon, player) {
+  const moveset = movesets[pokemon];
+  for (let i = 0; i < moveset.length; i++) {
+    const button = document.getElementById(`attack${i + 1}-${player}`);
+    const move = moveset[i];
+    const movePower = moveStats[move][1];
+    const moveAccuracy = moveStats[move][2];
+    const color = moveColors[moveStats[move][0]];
+    button.style.backgroundImage = `linear-gradient(to top right, white, ${color})`;
+    button.innerHTML = `<span class="name">${move}</span><span class="details">Power: ${movePower}<br> Accuracy: ${moveAccuracy}<br> Type: ${moveStats[move][0]}</span>`;
+  }
+
 }
 
-export { createHPBar, updateHPBar, initTurn, openMenu, closeMenu, showAttackOrStats, handleAttack, newPokemonSelected, raycasterEnabled, faintedPokemon, activeTurn };
+function generateStatsMenu(pokemon) {
+  console.log(stats[pokemon][0]);
+}
+
+  
+function showAttackOrStats(option, menuNum) {
+  document.getElementById('menu').style.display = 'none';
+  if (option === 'attack') {
+    document.getElementById(`attackMenu${menuNum}`).style.display = 'block';
+  } else if (option === 'stats') {
+    document.getElementById(`statsMenu`).style.display = 'block';
+  } else if (option === 'stats2') {
+    document.getElementById(`statsMenu2`).style.display = 'block';
+  }
+}
+
+export { createHPBar, updateHPBar, initTurn, openMenu, closeMenu, backtrackMenu, generateAttackMenu, generateStatsMenu, showAttackOrStats, handleAttack, newPokemonSelected, raycasterEnabled, faintedPokemon, activeTurn };
