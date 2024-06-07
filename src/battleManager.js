@@ -12,6 +12,8 @@ let poke1 = '';
 let poke2 = '';
 let attack0 = -1;
 let attack1 = -1;
+let hp1 = -1;
+let hp2 = -1;
 let player = 0;
 let activeTurn = 0;
 
@@ -32,17 +34,32 @@ const movesets = {
 
 const weaknesses = {
   'Absol' : ['Fighting', 'Bug', 'Fairy'],
-  'Aggron' :['Fighting', 'Ground', 'Water'],
-  'Altaria' : ['Ice', 'Rock', 'Dragon', 'Fairy'],
+  'Aggron' :['Water'],
+  'Altaria' : ['Rock', 'Dragon', 'Fairy'],
   'Armaldo' : ['Rock', 'Steel', 'Water'],
   'Blaziken' : ['Flying', 'Ground', 'Water', 'Psychic'],
-  'Dragonite' : ['Ice', 'Rock', 'Dragon', 'Fairy'],
+  'Dragonite' : ['Rock', 'Dragon', 'Fairy'],
   'Exploud' : ['Fighting'],
   'Ludicolo' : ['Flying', 'Poison', 'Bug'],
   'Ludicolo1' : ['Flying', 'Poison', 'Bug'],
   'Ludicolo2' : ['Flying', 'Poison', 'Bug'],
   'Ludicolo3' : ['Flying', 'Poison', 'Bug'],
   'Slaking' : ['Fighting'],
+}
+
+const doubleWeaknesses = {
+  'Absol' : [],
+  'Aggron' : ['Fighting', 'Ground'],
+  'Altaria' : ['Ice'],
+  'Armaldo' : [],
+  'Blaziken' : [],
+  'Dragonite' : ['Ice'],
+  'Exploud' : [],
+  'Ludicolo' : [],
+  'Ludicolo1' : [],
+  'Ludicolo2' : [],
+  'Ludicolo3' : [],
+  'Slaking' : []
 }
 
 
@@ -61,8 +78,53 @@ const resistances = {
   'Slaking' : []
 }
 
+const doubleResistances = {
+  'Absol' : ['Psychic'],
+  'Aggron' : ['Normal', 'Flying'],
+  'Altaria' : ['Grass'],
+  'Armaldo' : [],
+  'Blaziken' : ['Bug'],
+  'Dragonite' : ['Grass'],
+  'Exploud' : [],
+  'Ludicolo' : ['Water'],
+  'Ludicolo1' : ['Water'],
+  'Ludicolo2' : ['Water'],
+  'Ludicolo3' : ['Water'],
+  'Slaking' : ['Ghost']
+}
+
+const immunities = {
+  'Absol' : ['Psychic'],
+  'Aggron' : ['Poison'],
+  'Altaria' : ['Ground'],
+  'Armaldo' : [],
+  'Blaziken' : [],
+  'Dragonite' : ['Ground'],
+  'Exploud' : ['Ghost'],
+  'Ludicolo' : [],
+  'Ludicolo1' : [],
+  'Ludicolo2' : [],
+  'Ludicolo3' : [],
+  'Slaking' : ['Ghost']
+}
+
+const types = {
+  'Absol' : ['Dark'],
+  'Aggron' : ['Steel', 'Rock'],
+  'Altaria' : ['Dragon', 'Flying'],
+  'Armaldo' : ['Rock', 'Bug'],
+  'Blaziken' : ['Fire', 'Fighting'],
+  'Dragonite' : ['Dragon', 'Flying'],
+  'Exploud' : ['Normal'],
+  'Ludicolo' : ['Water', 'Grass'],
+  'Ludicolo1' : ['Water', 'Grass'],
+  'Ludicolo2' : ['Water', 'Grass'],
+  'Ludicolo3' : ['Water', 'Grass'],
+  'Slaking' : ['Normal']
+}
+
 // Format
-// [HP, Physical Atk, Special Atk, Phys Defense, Special Defense, Speed]
+// [HP, Physical Atk, Phys Defense, Special Atk, Special Defense, Speed]
 const stats = {
   'Absol' : [240, 238, 112, 139, 112, 139],
   'Aggron' :[250, 202, 328, 112, 112, 94],
@@ -109,9 +171,10 @@ const moveStats = {
   'X-Scissor' : ['Bug', 80, 100, 0, 0, 0]
 }
 
-function createHPBar(maxHP) {
+function createHPBar(pokemon) {
   // Store HP Values
-  const currentHP = maxHP;
+  const currentHP = stats[pokemon][0];
+  const maxHP = stats[pokemon][0];
 
   // Create Outline
   const outlineGeometry = new THREE.PlaneGeometry(1 + maxHP * 0.001, 0.15); // Want the HP Bar to reflect max HP
@@ -162,14 +225,14 @@ function updateHPBar(bar, damageDealt) {
 
 function whichPoke() {
   if (player == 0) {
-    return poke1.name;
+    return poke1;
   }
   
-  return poke2.name;
+  return poke2;
 }
 
 function handleAttack(attack) {
-  let poke = whichPoke();
+  const poke = whichPoke();
   console.log(poke);
 
   if (player == 0) {
@@ -196,25 +259,130 @@ function handleAttack(attack) {
     console.log('Attack: ' + attack1);
   }
 
-  calculateDamage();
-  closeMenu();
+  closeMenu(0);
 }
 
-function calculateDamage() {
-  let poke = whichPoke();
+function calculateDamage(attacker, defender, atk) {
+  // Determine multipliers and stats to use
+  let atkStat, defStat, rand, adRatio;
+  let typeEffect = 1;
+  let stab = 1;
+  let power = moveStats[atk][1];
 
-  // Determine if using physical or special
+  // First determine if using special/physical stats 
+  const isSpecial = moveStats[atk][5];
+  if (isSpecial) {
+    atkStat = stats[attacker][3];
+    defStat = stats[defender][4];
+  } else {
+    atkStat = stats[attacker][1];
+    defStat = stats[defender][2];
+  }
 
-  let damage = (2 * 100) / 5 + 2;
+  // Next determine type effectiveness
+  const type = moveStats[atk][0];
+  if (doubleWeaknesses[defender].includes(type)) { // Super Effective
+    typeEffect = 4;
+  } else if (weaknesses[defender].includes(type)) {
+    typeEffect = 2;
+  } else if (resistances[defender].includes(type)) { // Not Very Effective
+    typeEffect = 0.5;
+  } else if (doubleResistances[defender].includes(type)) {
+    typeEffect = 0.25;
+  } else if (immunities[defender].includes(type)) {
+    return 0;
+  }
+
+  // Next determine if STAB
+  if (types[attacker].includes(type)) {
+    stab = 1.5;
+  }
+
+  // Stat Ratio (Attack / Defense)
+  adRatio = atkStat / defStat;
+
+  // Vary the damage slightly
+  rand = Math.floor(Math.random() * 15 + 85) / 100;
+
+  // Verify Everything is set
+  /*console.log(atkStat);
+  console.log(defStat);
+  console.log(adRatio);
+  console.log(power);
+  console.log(typeEffect);
+  console.log(stab);
+  console.log(rand);
+  */
+
+  // Base Damage
+  let damage = ( (2 * 100) / 5) + 2;
+  // Apply power and ratio and add 2
+  damage *= power * adRatio;
+  // Divide by 50 add 2
+  damage /= 50;
+  damage += 2;
+  // Apply STAB, Type Effectivness, and Variability
+  damage *= rand * stab  * typeEffect;
+
+  console.log(Math.floor(damage));
+
+  return Math.floor(damage);
 }
 
-function initTurn(p1, p2, p) {
+function initTurn(p1, p2, p, hp) {
   console.log("HELLO");
-  poke1 = p1;
-  poke2 = p2;
+  poke1 = p1.name;
+  poke2 = p2.name;
   player = p;
+  if (player == 0) {
+    hp1 = hp;
+  } else {
+    hp2 = hp;
+  }
   openMenu();
   console.log(player);
+}
+
+function processTurn() {
+  let first = poke1;
+  let second = poke2;
+
+  const dmg1 = calculateDamage(poke1, poke2, attack0);
+  const dmg2 = calculateDamage(poke2, poke1, attack1);
+
+  // Determine turn order
+  if (stats[poke1][5] > stats[poke2][5]) {
+    first = poke1;
+    second = poke2;
+  } else if (stats[poke2][5] > stats[poke1][5]) {
+    first = poke2;
+    second = poke1;
+  } else {
+    let coinflip = Math.random() * 100;
+    first = (coinflip > 50) ? poke1 : poke2;
+    second = (coinflip > 50) ? poke2 : poke1;
+  }
+
+  console.log(hp1.currentHP);
+  console.log(hp2.currentHP);
+
+  // Damage pokemon 2 first, then check if it fainted
+  if (first === poke1) {
+    updateHPBar(hp2, dmg1);
+
+    if (hp2.currentHP - dmg2 > 0) {
+      setTimeout(() => { updateHPBar(hp1, dmg2); }, 500); 
+    }
+  }
+  // Damage pokemon 1 first then check if it fainted
+  else {
+    updateHPBar(hp1, dmg2);
+    if (hp1.currentHP - dmg1 > 0) {
+      setTimeout(() => { updateHPBar(hp2, dmg1); }, 500); 
+    }
+  }
+
+  setTimeout(() => {  raycasterEnabled = true; }, 100);
 }
 
 function switchTurn(turn) {
@@ -229,12 +397,21 @@ function openMenu() {
   raycasterEnabled = false;
 }
 
-function closeMenu() {
+function closeMenu(isCancel) {
   document.getElementById('overlay').style.display = 'none';
   document.getElementById('menu').style.display = 'none';
   document.getElementById('attackMenu').style.display = 'none';
-  switchTurn();
-  raycasterEnabled = true;
+  if (!isCancel) {
+    switchTurn(player);
+    // Avoid situation where clicking attack overlapping with other pokemon opens the other menu immediately
+    if (player == 1) {
+      setTimeout(() => {  raycasterEnabled = true; }, 100);
+    } else {
+      processTurn();
+    }
+  } else {
+    setTimeout(() => {  raycasterEnabled = true; }, 100);
+  }
 }
 
   

@@ -110,7 +110,7 @@ function buildPokeball(scene, pokeballs, pokeballTexture, x, y, z) {
 function attachEventListeners() {
     document.getElementById("attackButton").addEventListener("click", () => showAttackOrStats('attack'));
     document.getElementById("statsButton").addEventListener("click", () => showAttackOrStats('stats'));
-    document.getElementById("cancelButton").addEventListener("click", closeMenu);
+    document.getElementById("cancelButton").addEventListener("click", () => closeMenu(1));
     document.getElementById("attack1").addEventListener("click", () => handleAttack(1));
     document.getElementById("attack2").addEventListener("click", () => handleAttack(2));
     document.getElementById("attack3").addEventListener("click", () => handleAttack(3));
@@ -279,8 +279,8 @@ async function main() {
     let currS = 0;
     let currM = 0;
 
-    const serenaHP = createHPBar(300);
-    const mirorBHP = createHPBar(200);
+    const serenaHP = createHPBar(teamS[currS].name);
+    const mirorBHP = createHPBar(teamM[currM].name);
     
 
     teamS[currS].add(serenaHP);
@@ -290,9 +290,6 @@ async function main() {
     mirorBHP.position.set(0, 1.5, 0);
 
     // Main Battle Logic
-    let turn = activeTurn; // Serena = 0, Miror B = 1
-    let dmg0 = damage0;
-    let dmg1 = damage1;
 
     const onClick = (event) => { 
         pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -304,10 +301,10 @@ async function main() {
             let object = intersects[0].object;
             let selectedPoke = object.parent.name;
             if (selectedPoke) {
-                if (turn == 0) {
+                if (activeTurn == 0) {
                     if (selectedPoke == teamS[currS].name) {
                         console.log('Serena is Thinking');
-                        initTurn(teamS[currS], teamM[currM], 0);
+                        initTurn(teamS[currS], teamM[currM], 0, serenaHP);
                         console.log("Test");
                     }
                 } 
@@ -315,10 +312,8 @@ async function main() {
                 if (activeTurn == 1) {
                     if (selectedPoke == teamM[currM].name) {
                         console.log('Miror B is Thinking');
-                        initTurn(teamS[currS], teamM[currM], 1);
-                       // window.removeEventListener('click', onClick);
+                        initTurn(teamS[currS], teamM[currM], 1, mirorBHP);
                        // enactTurn();
-                       // window.addEventListener('click', onClick);
                     }
                 }
 
