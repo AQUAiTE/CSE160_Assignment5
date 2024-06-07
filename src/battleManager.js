@@ -489,6 +489,8 @@ function backtrackMenu(isActive) {
   document.getElementById('attackMenu1').style.display = 'none';
   document.getElementById('statsMenu').style.display = 'none';
   document.getElementById('statsMenu2').style.display = 'none';
+  document.getElementById('stats1').style.display = 'none';
+  document.getElementById('stats2').style.display = 'none';
   if (isActive)
   {  
     document.getElementById('overlay').style.display = 'block';
@@ -516,18 +518,86 @@ function generateAttackMenu(pokemon, player) {
 }
 
 function generateStatsMenu(pokemon) {
-  console.log(stats[pokemon][0]);
+  const hp = stats[pokemon][0];
+  const physAtk = stats[pokemon][1];
+  const physDef = stats[pokemon][2];
+  const spAtk = stats[pokemon][3];
+  const spDef = stats[pokemon][4];
+  const speed = stats[pokemon][5];
+  const type1 = types[pokemon][0];
+  const typeColor1 = moveColors[type1];
+  let typeColor2, spanColor;
+  let type2 = types[pokemon][1];
+  if (!type2) {
+    type2 = "";
+    spanColor = `background-image: linear-gradient(to top right, ${typeColor1}, white)`;
+  } else {
+    typeColor2 = moveColors[type2];
+    type2 = "/" + type2;
+    spanColor = `background-image: linear-gradient(to top right, ${typeColor1}, ${typeColor2})`;
+  }
+
+  console.log(spanColor);
+
+  const stats1 = document.getElementById("stats1");
+  const stats2 = document.getElementById("stats2");
+
+  stats1.innerHTML = 
+  `
+  <span class="name">${pokemon}</span>
+  <br>
+  <span class="type" style ="${spanColor}">${type1}${type2}</span>
+  <br>
+  <span class="stats">
+  HP: ${hp}
+  <br>
+  ATTACK: ${physAtk}
+  <br>
+  DEFENSE: ${physDef}
+  <br>
+  SP. ATK: ${spAtk}
+  <br>
+  SP. DEF: ${spDef}
+  <br>
+  SPEED: ${speed}
+  </span>
+  <br>`;
+
+  stats2.innerHTML = 
+  `
+  <span class="name">${pokemon}</span>
+  <br>
+  <span class="type" style ="${spanColor}">${type1}${type2}</span>
+  <br>
+  <span class="stats">
+  HP: ${hp}
+  <br>
+  ATTACK: ${physAtk}
+  <br>
+  DEFENSE: ${physDef}
+  <br>
+  SP. ATK: ${spAtk}
+  <br>
+  SP. DEF: ${spDef}
+  <br>
+  SPEED: ${speed}
+  </span>
+  <br>`;
+
 }
 
   
 function showAttackOrStats(option, menuNum) {
+  raycasterEnabled = false;
   document.getElementById('menu').style.display = 'none';
   if (option === 'attack') {
     document.getElementById(`attackMenu${menuNum}`).style.display = 'block';
   } else if (option === 'stats') {
     document.getElementById(`statsMenu`).style.display = 'block';
+    document.getElementById('stats1').style.display = 'block';
   } else if (option === 'stats2') {
     document.getElementById(`statsMenu2`).style.display = 'block';
+    document.getElementById('stats2').style.display = 'block';
   }
 }
 
