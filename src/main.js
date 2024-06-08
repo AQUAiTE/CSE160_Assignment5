@@ -331,15 +331,10 @@ async function main() {
                 if (activeTurn == 2) {
                     // Enable Serena's Pokemon to be selected
                     if (faintedPokemon == teamS[currS].name) {
-                        if (availableS == 0) {
-                            scene.remove(teamS[currS]);
-                            window.removeEventListener('click', onClick);
-                        }
-
                         scene.remove(teamS[currS]);
+                        scene.remove(pokeballs[currS + 6]);
                         teamS[currS].remove(serenaHP);
                         if (teamS.includes(selectedPoke) && selectedPoke.name != faintedPokemon) {
-                            console.log("Serena Chose: " + selectedPoke.name);
                             currS = teamS.indexOf(selectedPoke);
                             selectedPoke.position.x = 1.5;
                             selectedPoke.position.z = 1.5;
@@ -352,13 +347,9 @@ async function main() {
                             newPokemonSelected();
                         }
                     } else { // Enable Miror B's Pokemon to be selected
-                        if (availableM == 0) {
-                            scene.remove(teamM[currM]);
-                            window.removeEventListener('click', onClick);
-                        }
-
                         if (teamM.includes(selectedPoke) && selectedPoke.name != faintedPokemon) {
                             scene.remove(teamM[currM]);
+                            scene.remove(pokeballs[currM]);
                             teamM[currM].remove(mirorBHP);
                             currM = teamM.indexOf(selectedPoke);
                             selectedPoke.position.x = -1.5;
@@ -382,6 +373,7 @@ async function main() {
     const raycaster = new THREE.Raycaster();
 
     window.addEventListener('click', onClick);
+    let alreadyEnded = false;
 
     // In Main Functions ===================================================================================================================
 
@@ -435,6 +427,20 @@ async function main() {
         updateHPBarFacingCamera(mirorBHP, camera);
 
         renderer.render(scene, camera);
+
+        if (!alreadyEnded) {
+            if (activeTurn == -1) {
+                window.removeEventListener('click', onClick);
+                scene.remove(teamS[currS]);
+                scene.remove(pokeballs[currS + 6]);
+                alreadyEnded = true;
+            } else if (activeTurn == -2) {
+                window.removeEventListener('click', onClick);
+                scene.remove(teamM[currM]);
+                scene.remove(pokeballs[currM]);
+                alreadyEnded = true;
+            }
+        }
 
         requestAnimationFrame(render);
 

@@ -19,17 +19,17 @@ let sPokes = 6;
 let mPokes = 6;
 
 const movesets = {
-  'Absol' : ['Slash', 'Psycho Cut', 'Aerial Ace', 'Stone Edge'],
+  'Absol' : ['Slash', 'Psycho Cut', 'Night Slash', 'Stone Edge'],
   'Aggron' : ['Strength', 'Iron Head', 'Stone Edge', 'Earthquake'],
   'Altaria' : ['Dragon Claw', 'Steel Wing', 'Moonblast', 'Aerial Ace'],
   'Armaldo' : ['X-Scissor', 'Slash', 'Rock Slide', 'Earthquake'],
   'Blaziken' : ['Blaze Kick', 'Sky Uppercut', 'Slash', 'Brave Bird'],
-  'Dragonite' : ['Thunder Punch', 'Ice Beam', 'Dragon Claw', 'Earthquake'],
+  'Dragonite' : ['Thunder Punch', 'Hurricane', 'Dragon Claw', 'Earthquake'],
   'Exploud' : ['Boomburst', 'Crunch', 'Ice Fang', 'Surf'],
-  'Ludicolo' : ['Giga Drain', 'Ice Beam', 'Surf', 'Fake Out'],
-  'Ludicolo1' : ['Giga Drain', 'Ice Beam', 'Surf', 'Fake Out'],
-  'Ludicolo2' : ['Giga Drain', 'Ice Beam', 'Surf', 'Fake Out'],
-  'Ludicolo3' : ['Giga Drain', 'Ice Beam', 'Surf', 'Fake Out'],
+  'Ludicolo' : ['Giga Drain', 'Ice Beam', 'Surf', 'Facade'],
+  'Ludicolo1' : ['Giga Drain', 'Ice Beam', 'Hydro Pump', 'Facade'],
+  'Ludicolo2' : ['Giga Drain', 'Ice Beam', 'Waterfall', 'Facade'],
+  'Ludicolo3' : ['Giga Drain', 'Blizzard', 'Surf', 'Facade'],
   'Slaking' : ['Hammer Arm', 'Earthquake', 'Shadow Claw', 'Giga Impact'],
 };
 
@@ -157,40 +157,45 @@ const stats = {
   'Exploud' : [318, 168, 117, 168, 135, 126],
   'Ludicolo' : [270, 130, 130, 166, 184, 130],
   'Ludicolo1' : [270, 130, 130, 166, 184, 130],
-  'Ludicolo2' : [255, 140, 130, 166, 184, 133],
+  'Ludicolo2' : [255, 155, 130, 145, 184, 133],
   'Ludicolo3' : [270, 120, 135, 175, 180, 135],
   'Slaking' : [410, 292, 184, 175, 121, 284]
 }
 
 // Format
-// [Type, Power, Accuracy, Recoil %, Healing %, Physical(0)/Special(1)]
+// [Type, Power, Accuracy, Recoil %, Healing %, Physical(0)/Special(1), Flinch%]
 const moveStats = {
-  'Aerial Ace' : ['Flying', 60, 101, 0, 0, 0],
-  'Blaze Kick' : ['Fire', 85, 90, 0, 0, 0],
-  'Boomburst' : ['Normal', 140, 100, 0, 0, 1],
-  'Brave Bird' : ['Flying', 120, 100, 0.33, 0, 0],
-  'Crunch' : ['Dark', 80, 100, 0, 0, 0],
-  'Dragon Claw' : ['Dragon', 80, 100, 0, 0, 0],
-  'Earthquake' : ['Ground', 100, 100, 0, 0, 0],
-  'Fake Out' : ['Normal', 40, 100, 0, 0, 0],
-  'Giga Drain' : ['Grass', 75, 100, 0, 0.5, 1],
-  'Giga Impact' : ['Normal', 150, 90, 0, 0, 0],
-  'Hammer Arm' : ['Fighting', 100, 90, 0, 0, 0],
-  'Ice Beam' : ['Ice', 90, 25, 0, 0, 1],
-  'Ice Fang' : ['Ice', 65, 95, 0, 0, 0],
-  'Iron Head' : ['Steel', 80, 100, 0, 0, 0],
-  'Moonblast' : ['Fairy', 95, 100, 0, 0, 1],
-  'Psycho Cut' : ['Psychic', 70, 100, 0, 0, 0],
-  'Rock Slide' : ['Rock', 75, 90, 0, 0, 0],
-  'Shadow Claw' : ['Ghost', 70, 100, 0, 0, 0],
-  'Sky Uppercut' : ['Fighting', 85, 90, 0, 0, 0],
-  'Slash' : ['Normal', 70, 100, 0, 0, 0],
-  'Steel Wing' : ['Steel', 70, 90, 0, 0, 0],
-  'Stone Edge' : ['Rock', 100, 80, 0, 0, 0],
-  'Strength' : ['Normal', 80, 100, 0, 0, 0],
-  'Surf' : ['Water', 90, 100, 0, 0, 1],
-  'Thunder Punch' : ['Electric', 75, 100, 0, 0, 0],
-  'X-Scissor' : ['Bug', 80, 100, 0, 0, 0]
+  'Aerial Ace' : ['Flying', 60, 101, 0, 0, 0, 0],
+  'Blaze Kick' : ['Fire', 85, 90, 0, 0, 0, 0],
+  'Blizzard' : ['Ice', 110, 70, 0, 0, 1, 0],
+  'Boomburst' : ['Normal', 140, 100, 0, 0, 1, 0],
+  'Brave Bird' : ['Flying', 120, 100, 0.33, 0, 0, 0],
+  'Crunch' : ['Dark', 80, 100, 0, 0, 0, 0],
+  'Dragon Claw' : ['Dragon', 80, 100, 0, 0, 0, 0],
+  'Earthquake' : ['Ground', 100, 100, 0, 0, 0, 0],
+  'Facade' : ['Normal', 70, 100, 0, 0, 0, 0],
+  'Giga Drain' : ['Grass', 75, 100, 0, 0.5, 1, 0],
+  'Giga Impact' : ['Normal', 150, 90, 0, 0, 0, 0],
+  'Hammer Arm' : ['Fighting', 100, 90, 0, 0, 0, 0],
+  'Hurricane' : ['Flying', 110, 70, 0, 0, 1, 0],
+  'Hydro Pump' : ['Water', 110, 80, 0, 0, 1, 0],
+  'Ice Beam' : ['Ice', 90, 100, 0, 0, 1, 0],
+  'Ice Fang' : ['Ice', 65, 95, 0, 0, 0, 0.10],
+  'Iron Head' : ['Steel', 80, 100, 0, 0, 0, 0.3],
+  'Moonblast' : ['Fairy', 95, 100, 0, 0, 1, 0],
+  'Night Slash' : ['Dark', 70, 100, 0, 0, 0, 0.2],
+  'Psycho Cut' : ['Psychic', 70, 100, 0, 0, 0, 0],
+  'Rock Slide' : ['Rock', 75, 90, 0, 0, 0, 1],
+  'Shadow Claw' : ['Ghost', 70, 100, 0, 0, 0, 0],
+  'Sky Uppercut' : ['Fighting', 85, 90, 0, 0, 0, 0],
+  'Slash' : ['Normal', 70, 100, 0, 0, 0, 0],
+  'Steel Wing' : ['Steel', 70, 90, 0, 0, 0, 0],
+  'Stone Edge' : ['Rock', 100, 80, 0, 0, 0, 0],
+  'Strength' : ['Normal', 80, 100, 0, 0, 0, 0],
+  'Surf' : ['Water', 90, 100, 0, 0, 1, 0],
+  'Thunder Punch' : ['Electric', 75, 100, 0, 0, 0, 0],
+  'Waterfall' : ['Water', 80, 100, 0, 0, 0, 0.2],
+  'X-Scissor' : ['Bug', 80, 100, 0, 0, 0, 0]
 }
 
 
@@ -369,6 +374,12 @@ function processTurn() {
   let dmg1 = calculateDamage(poke1, poke2, attack0);
   let dmg2 = calculateDamage(poke2, poke1, attack1);
 
+  if (dmg1 == 0) {
+    alert(`${attack0} doesn't affect ${poke2}...`);
+  } else if (dmg2 == 0) {
+    alert(`${attack1} doesn't affect ${poke1}...`);
+  }
+
   let acc1 = Math.random() * 100;
   let acc2 = Math.random() * 100;
 
@@ -380,6 +391,30 @@ function processTurn() {
   if (acc2 >= moveStats[attack1][2]) {
     dmg2 = 0;
     alert(`${poke2}'s Attack Missed!`);
+  }
+
+  // Determine turn order
+  if (stats[poke1][5] > stats[poke2][5]) {
+    first = poke1;
+  } else if (stats[poke2][5] > stats[poke1][5]) {
+    first = poke2;
+  } else {
+    let coinflip = Math.random() * 100;
+    first = (coinflip > 50) ? poke1 : poke2;
+  }
+
+  if (first == poke1) {
+    let flinch = Math.random() * 100;
+    if (flinch <= moveStats[attack0][6]) {
+      dmg2 = 0;
+      alert(`${poke2} flinched and couldn't move!`);
+    }
+  } else if (first == poke2) {
+    let flinch = Math.random();
+    if (flinch <= moveStats[attack1][6]) {
+      dmg1 = 0;
+      alert(`${poke1} flinched and couldn't move!`);
+    }
   }
 
   // Determine if any healing/recoil is involved
@@ -410,16 +445,6 @@ function processTurn() {
     isHealRecoil2 = true;
   }
 
-  // Determine turn order
-  if (stats[poke1][5] > stats[poke2][5]) {
-    first = poke1;
-  } else if (stats[poke2][5] > stats[poke1][5]) {
-    first = poke2;
-  } else {
-    let coinflip = Math.random() * 100;
-    first = (coinflip > 50) ? poke1 : poke2;
-  }
-
   // Damage pokemon 2 first, then check if it fainted
   if (first === poke1) {
     let newHP = hp2.currentHP - dmg1;
@@ -442,6 +467,7 @@ function processTurn() {
         sPokes--;
         if (sPokes == 0) {
           alert("MirorB Wins!");
+          activeTurn = -1;
           return;
         }
         alert('Serena, please swap out your fainted Pokemon!');
@@ -452,6 +478,7 @@ function processTurn() {
       mPokes--;
       if (mPokes == 0) {
         alert("Serena Wins!");
+        activeTurn = -2;
         return;
       }
       alert('MirorB, please swap out your fainted Pokemon!');
@@ -480,6 +507,7 @@ function processTurn() {
         mPokes--;
         if (mPokes == 0) {
           alert("Serena Wins!");
+          activeTurn = -2;
           return;
         }
         alert('MirorB, please swap out your fainted Pokemon!');
@@ -490,6 +518,7 @@ function processTurn() {
       sPokes--;
       if (sPokes == 0) {
         alert("MirorB Wins!");
+        activeTurn = -1;
         return;
       }
       alert('Serena, please swap out your fainted Pokemon!');
